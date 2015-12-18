@@ -1,0 +1,21 @@
+{
+  "name": "decorators-js",
+  "homepage": "https://github.com/jasmith79/decorators-js",
+  "authors": [
+    "jsmith <jasmith79@gmail.com>"
+  ],
+  "description": "Common JS Decorators",
+  "main": "decorators.js",
+  "moduleType": [],
+  "keywords": [
+    "Decorators"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
