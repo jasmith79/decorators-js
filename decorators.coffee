@@ -8,14 +8,14 @@ Common decorators
 _global = switch
   when window? then window
   when global? then global
-  when this? then this
+  when this?   then this
   else {}
 
 MOD_NAME = 'Decorators'
 MOD_SYSTEM = switch
-  when module? and module.exports? and typeof require is 'function' then 'commonJS'
-  when typeof requirejs is 'function' and typeof define is 'function' and define.amd? then 'AMD'
-  when System? and typeof System.import is 'function' then 'systemJS'
+  when module? and module.exports? and typeof require is 'function'   then 'commonJS'
+  when typeof requirejs is 'function' and typeof define is 'function' then 'AMD'
+  when System? and typeof System.import is 'function'                 then 'systemJS'
   else null
 
 ### Utils ###
@@ -23,7 +23,7 @@ MOD_SYSTEM = switch
 #include :: String, String -> a
 include = (identifier, property = identifier) -> switch MOD_SYSTEM
   when 'commonJS' then require identifier
-  when 'AMD' then throw new Error "Asynchronous Modules not supported"
+  when 'AMD'      then throw new Error "Asynchronous Modules not supported"
   when 'systemJS' then _global.System.import identifier
   else (_global[property] or
     throw new Error "Unable to import module #{identifier}, no global property #{property}")
@@ -32,7 +32,7 @@ include = (identifier, property = identifier) -> switch MOD_SYSTEM
 extern = (a) ->
   switch MOD_SYSTEM
     when 'commonJS' then module.exports = a
-    when 'AMD' then throw new Error "Asynchronous Modules not supported"
+    when 'AMD'      then throw new Error "Asynchronous Modules not supported"
     when 'systemJS' then _global.System.set MOD_NAME, System.newModule(a)
     else _global[MOD_NAME] = a
 
@@ -51,7 +51,7 @@ getFnName = (fn) ->
 #onlyIf :: [a] -> b -> [a] -> b
 #onlyIf :: [a] -> b -> [Null] -> Null
 onlyIf = (fn, thisArg = null) -> (args...) ->
-  test = if args.length is 1 and Array.isArray args[0] then args[0] else args
+  test   = if args.length is 1 and Array.isArray args[0] then args[0] else args
   passed = if fn.length and test.length is 0 then false else test.every((x) -> x?)
   return if passed then fn.apply thisArg, args else null
 
@@ -72,10 +72,10 @@ debounce = (delay, fn) ->
 #Delay in milliseconds. Returns the timer ID so caller can cancel
 throttle = (delay, fn) ->
   if not delay? then throw Error "Function throttle called with no timeout."
-  last  = null
-  timer = null
+  last    = null
+  timer   = null
   context = if this is _global then null else this
-  func  = (args...) ->
+  func    = (args...) ->
     now = Date.now()
     if last? and now < last + delay
       clearTimeout timer
@@ -97,7 +97,7 @@ log = (fn) => (args...) =>
   console.log "Function #{getFnName fn} called with arguments #{args} and yielded #{res}"
   return res
 
-#setLocalStorage :: (EventObject -> [String]), String, String -> EventObject -> EventObject
+#setLocalStorage :: (Event -> [String]), String, String -> Event -> Event
 #meant to decorate an event handler with adding the current value (or whatever desired property) of
 #the event target to local storage. The check on the return value of the function allows the
 #decorated function to supply alternative values for setting to localStorage.
@@ -140,7 +140,7 @@ timeoutP = do ->
     Sorry for any inconvenience."""
 
   return (timeout, fn) ->
-    if not timeout? then throw Error "Function timeoutP called with no timeout."
+    if not timeout? then throw new Error "Function timeoutP called with no timeout."
 
     func = (args...) -> new Promise (resolve, reject) ->
       promise = fn.apply null, args
@@ -160,6 +160,22 @@ timeoutP = do ->
 
     return if fn? then func else (fnArg) -> timeoutP timeout, fnArg
 
+#workerify :: (a -> b) -> (a -> b)
+#NOTE this method creates inline workers using URL Objects. The created URLs last the *lifetime* of
+#the document. Beware ballooning memory footprint if you workerify fns on the fly.
+workerify = (fn, thisArg = null) ->
+  blob = new Blob ["onmessage = function(e) { postMessage((#{fn})(e)); })"]
+  url = URL.createURLObject blob
+  worker = new Worker(url)
+  return (arg) ->
+    worker.postMessage arg
+    return new Promise (resolve, reject) ->
+      listener = (e) ->
+        worker.removeEventListener 'message', listener
+        resolve e.data
+
+      worker.addEventListener 'message', listener
+
 extern {
   setLocalStorage
   onlyIf
@@ -168,4 +184,5 @@ extern {
   throttle
   denodeify
   log
+  workerify
 }
