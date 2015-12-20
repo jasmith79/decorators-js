@@ -165,3 +165,28 @@ describe 'denodeify', ->
         assert.equal one, 1
         assert.equal two, 2
         done()
+
+describe 'workerify', ->
+  it 'should run passed in function in a separate thread', (done) ->
+    factorialWorker = d.workerify (n) ->
+      i = n
+      ans = 1
+      if n < 0 then throw new Error 'Invalid input for factorial'
+      `for (i; i != 0; i--) {
+        ans *= i;
+      }`
+      return ans
+
+    passes = factorialWorker 10
+    passes
+      .then (val) ->
+        assert.equal val, 3628800
+        return factorialWorker -1
+      .then(
+        ((val) ->
+          #this should never run?
+          assert.ok false),
+        ((err) ->
+          assert.ok (err instanceof Error)
+          assert.equals err.message, 'Invalid input for factorial')
+          done())

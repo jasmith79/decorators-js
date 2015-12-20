@@ -161,14 +161,15 @@ timeoutP = do ->
     return if fn? then func else (fnArg) -> timeoutP timeout, fnArg
 
 #workerify :: (a -> b) -> (a -> b)
-#NOTE this method creates inline workers using URL Objects. The created URLs last the *lifetime* of
-#the document. Beware ballooning memory footprint if you workerify fns on the fly.
 workerify = (fn, thisArg = null) ->
-  blob = new Blob ["onmessage = function(e) { postMessage((#{fn})(e)); })"]
-  url = URL.createURLObject blob
+  blob   = new Blob ["onmessage = function(e) { postMessage((#{fn})(e)); })"]
+  url    = URL.createURLObject blob
   worker = new Worker(url)
+  URL.revokeURLObject url
   return (arg) ->
     worker.postMessage arg
+    #TODO change this to some sort of event streamy thing.
+    #Async function from ES 2016? CSP channel? Observable?
     return new Promise (resolve, reject) ->
       listener = (e) ->
         worker.removeEventListener 'message', listener
