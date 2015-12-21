@@ -96,6 +96,11 @@ throttle = (delay, fn) =>
 log = (fn) => (args...) ->
   context = if this is _global then null else this
   res = fn.apply context, args
+  logged = switch typeof res
+    when 'object' then JSON.stringify res
+    when 'string' then res
+    else res.toString()
+      
   console.log "Function #{getFnName fn} called with arguments #{args} and yielded #{res}"
   return res
 

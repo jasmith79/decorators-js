@@ -170,10 +170,20 @@ Common decorators
   log = (function(_this) {
     return function(fn) {
       return function() {
-        var args, context, res;
+        var args, context, logged, res;
         args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
         context = this === _global ? null : this;
         res = fn.apply(context, args);
+        logged = (function() {
+          switch (typeof res) {
+            case 'object':
+              return JSON.stringify(res);
+            case 'string':
+              return res;
+            default:
+              return res.toString();
+          }
+        })();
         console.log("Function " + (getFnName(fn)) + " called with arguments " + args + " and yielded " + res);
         return res;
       };
