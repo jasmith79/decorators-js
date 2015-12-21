@@ -50,18 +50,19 @@ getFnName = (fn) ->
 #onlyIf :: a -> b -> Null -> Null
 #onlyIf :: [a] -> b -> [a] -> b
 #onlyIf :: [a] -> b -> [Null] -> Null
-onlyIf = (fn, thisArg = null) -> (args...) ->
-  test   = if args.length is 1 and Array.isArray args[0] then args[0] else args
-  passed = if fn.length and test.length is 0 then false else test.every((x) -> x?)
-  return if passed then fn.apply thisArg, args else null
+onlyIf = (fn) => (args...) ->
+  test    = if args.length is 1 and Array.isArray args[0] then args[0] else args
+  passed  = if fn.length and test.length is 0 then false else test.every((x) -> x?)
+  context = if this is _global then null else this
+  return if passed then fn.apply context, args else null
 
 #debounce :: Int -> (a -> Null) -> Int
 #Delay in milliseconds. Returns the timer ID so caller can cancel
-debounce = (delay, fn) ->
+debounce = (delay, fn) =>
   if not delay? then throw Error "Function debounce called with no timeout."
   timer   = null
-  context = if this is _global then null else this
   func    = (args...) ->
+    context = if this is _global then null else this
     clearTimeout timer
     timer = setTimeout (-> fn.apply context, args), delay
     return timer
@@ -70,12 +71,12 @@ debounce = (delay, fn) ->
 
 #throttle :: Int -> (a -> Null) -> Int
 #Delay in milliseconds. Returns the timer ID so caller can cancel
-throttle = (delay, fn) ->
+throttle = (delay, fn) =>
   if not delay? then throw Error "Function throttle called with no timeout."
   last    = null
   timer   = null
-  context = if this is _global then null else this
   func    = (args...) ->
+    context = if this is _global then null else this
     now = Date.now()
     if last? and now < last + delay
       clearTimeout timer
@@ -92,8 +93,9 @@ throttle = (delay, fn) ->
   return if fn? then func else (fnArg) -> throttle(delay, fnArg)
 
 #log :: (a -> a) -> [a] -> a
-log = (fn) => (args...) =>
-  res = fn.apply this, args
+log = (fn) => (args...) ->
+  context = if this is _global then null else this
+  res = fn.apply context, args
   console.log "Function #{getFnName fn} called with arguments #{args} and yielded #{res}"
   return res
 
@@ -119,10 +121,11 @@ setLocalStorage = (fn, prop = 'label', val = 'value') -> (e) ->
   return e
 
 #denodeify :: (a -> b) -> [a] -> Promise b
-denodeify = (fn, thisArg) ->
+denodeify = (fn) =>
   return (args...) ->
+    context = if this is _global then null else this
     return new Promise (resolve, reject) ->
-      fn.apply(thisArg, args.concat([
+      fn.apply(context, args.concat([
         ((err, resArgs...) ->
           if err? then reject err
           res = switch resArgs.length
@@ -139,29 +142,31 @@ timeoutP = do ->
     experiencing the awesome in the next few seconds, retry your request or reload the page.
     Sorry for any inconvenience."""
 
-  return (timeout, fn) ->
+  return (timeout, fn) =>
     if not timeout? then throw new Error "Function timeoutP called with no timeout."
 
-    func = (args...) -> new Promise (resolve, reject) ->
-      promise = fn.apply null, args
-      timer = setTimeout (-> reject err), timeout
-      promise.then(
-        ((val) ->
-          clearTimeout testTimer
-          clearTimeout timer
-          resolve val),
+    func = (args...) ->
+      context = if this is _global then null else this
+      return new Promise (resolve, reject) ->
+        promise = fn.apply context, args
+        timer = setTimeout (-> reject err), timeout
+        promise.then(
+          ((val) ->
+            clearTimeout testTimer
+            clearTimeout timer
+            resolve val),
 
-        ((e) ->
-          clearTimeout timer
-          clearTimeout testTimer
-          reject e))
+          ((e) ->
+            clearTimeout timer
+            clearTimeout testTimer
+            reject e))
 
-      return null
+        return null
 
     return if fn? then func else (fnArg) -> timeoutP timeout, fnArg
 
 #workerify :: (a -> b) -> (a -> b)
-workerify = (fn, thisArg = null) ->
+workerify = (fn) ->
   blob   = new Blob ["onmessage = function(e) { postMessage((#{fn})(e)); })"]
   url    = URL.createURLObject blob
   worker = new Worker(url)

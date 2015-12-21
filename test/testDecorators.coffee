@@ -63,10 +63,14 @@ assert = require 'assert'
 ### Tests ###
 
 describe 'onlyIf', ->
-  it 'should not run when some ar#should be ignoredgs are null/undefined, otherwise run', ->
+  it 'should not run when some args are null/undefined, otherwise run', ->
     sideEffect = null
     gives3 = d.onlyIf (a) -> 3
     emptyOk = d.onlyIf -> 4
+    method =
+      num: 3
+      add: d.onlyIf (n) -> n + this.num
+
     assert.equal 3, gives3(15)
     assert.equal 3, gives3('foo')
     assert.equal 3, gives3({})
@@ -80,6 +84,8 @@ describe 'onlyIf', ->
     assert.equal null, sideEffect
     assert.equal null, emptyOk(null)
     assert.equal 4, emptyOk()
+    assert.equal 7, method.add(4)
+    assert.equal null, method.add()
 
 describe 'setLocalStorage', ->
   it 'should cache the result of an event handler in localStorage', ->
@@ -123,12 +129,27 @@ describe 'debounce', ->
     onlyAfter500 = d.debounce 500
     counter = 0
     f = onlyAfter500 -> counter += 1
+    method =
+      num: 0
+      inc: d.debounce 500, -> this.num += 1
+
     f()
     f() #should be ignored
     f() #should be ignored
+    method.inc()
+    method.inc() #should be ignored
+    method.inc() #should be ignored
     setTimeout (->
       assert.equal 1, counter
+      assert.equal 1, method.num
       done()), 1000
+
+describe 'log', ->
+  it 'Should work for methods', ->
+    obj =
+      method: d.log -> this
+
+    assert.equal obj, obj.method()
 
 describe 'timeoutP', ->
   it 'Should fail a promise if it takes longer than the timeout to resolve', (done) ->
@@ -166,27 +187,28 @@ describe 'denodeify', ->
         assert.equal two, 2
         done()
 
-describe 'workerify', ->
-  it 'should run passed in function in a separate thread', (done) ->
-    factorialWorker = d.workerify (n) ->
-      i = n
-      ans = 1
-      if n < 0 then throw new Error 'Invalid input for factorial'
-      `for (i; i != 0; i--) {
-        ans *= i;
-      }`
-      return ans
-
-    passes = factorialWorker 10
-    passes
-      .then (val) ->
-        assert.equal val, 3628800
-        return factorialWorker -1
-      .then(
-        ((val) ->
-          #this should never run?
-          assert.ok false),
-        ((err) ->
-          assert.ok (err instanceof Error)
-          assert.equals err.message, 'Invalid input for factorial')
-          done())
+#Need to mock Blob for node tests
+# describe 'workerify', ->
+#   it 'should run passed in function in a separate thread', (done) ->
+#     factorialWorker = d.workerify (n) ->
+#       i = n
+#       ans = 1
+#       if n < 0 then throw new Error 'Invalid input for factorial'
+#       `for (i; i != 0; i--) {
+#         ans *= i;
+#       }`
+#       return ans
+#
+#     passes = factorialWorker 10
+#     passes
+#       .then (val) ->
+#         assert.equal val, 3628800
+#         return factorialWorker -1
+#       .then(
+#         ((val) ->
+#           #this should never run?
+#           assert.ok false),
+#         ((err) ->
+#           assert.ok (err instanceof Error)
+#           assert.equals err.message, 'Invalid input for factorial')
+#           done())

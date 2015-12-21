@@ -110,8 +110,8 @@ Unit tests for decorators.js
   /* Tests */
 
   describe('onlyIf', function() {
-    return it('should not run when some ar#should be ignoredgs are null/undefined, otherwise run', function() {
-      var emptyOk, gives3, sideEffect;
+    return it('should not run when some args are null/undefined, otherwise run', function() {
+      var emptyOk, gives3, method, sideEffect;
       sideEffect = null;
       gives3 = d.onlyIf(function(a) {
         return 3;
@@ -119,6 +119,12 @@ Unit tests for decorators.js
       emptyOk = d.onlyIf(function() {
         return 4;
       });
+      method = {
+        num: 3,
+        add: d.onlyIf(function(n) {
+          return n + this.num;
+        })
+      };
       assert.equal(3, gives3(15));
       assert.equal(3, gives3('foo'));
       assert.equal(3, gives3({}));
@@ -133,7 +139,9 @@ Unit tests for decorators.js
       })(null);
       assert.equal(null, sideEffect);
       assert.equal(null, emptyOk(null));
-      return assert.equal(4, emptyOk());
+      assert.equal(4, emptyOk());
+      assert.equal(7, method.add(4));
+      return assert.equal(null, method.add());
     });
   });
 
@@ -191,19 +199,41 @@ Unit tests for decorators.js
 
   describe('debounce', function() {
     return it('Repeated invocations in the wait get dropped', function(done) {
-      var counter, f, onlyAfter500;
+      var counter, f, method, onlyAfter500;
       onlyAfter500 = d.debounce(500);
       counter = 0;
       f = onlyAfter500(function() {
         return counter += 1;
       });
+      method = {
+        num: 0,
+        inc: d.debounce(500, function() {
+          return this.num += 1;
+        })
+      };
       f();
       f();
       f();
+      method.inc();
+      method.inc();
+      method.inc();
       return setTimeout((function() {
         assert.equal(1, counter);
+        assert.equal(1, method.num);
         return done();
       }), 1000);
+    });
+  });
+
+  describe('log', function() {
+    return it('Should work for methods', function() {
+      var obj;
+      obj = {
+        method: d.log(function() {
+          return this;
+        })
+      };
+      return assert.equal(obj, obj.method());
     });
   });
 
