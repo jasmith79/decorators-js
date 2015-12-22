@@ -212,3 +212,21 @@ describe 'denodeify', ->
 #           assert.ok (err instanceof Error)
 #           assert.equals err.message, 'Invalid input for factorial')
 #           done())
+
+describe 'unNew', ->
+  it 'Should allow a constructor function to be `apply`ed', ->
+    januaryFirst2015 = 1422766800000
+    arr = [2015, 1, 1]
+    dater = d.unNew Date
+    allAtOnce = d.unNew Date, 2015, 1, 1
+    time1 = dater.apply(null, arr).getTime()
+    time2 = allAtOnce.getTime()
+    assert.equal time1, januaryFirst2015
+    assert.equal time2, januaryFirst2015
+
+    method =
+      Foo: -> this.a = 3
+
+    foo = d.unNew(method.Foo)()
+    assert.ok foo instanceof method.Foo
+    assert.equal foo.a, 3

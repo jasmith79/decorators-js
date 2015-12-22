@@ -5,7 +5,7 @@ Common decorators
  */
 
 (function() {
-  var MOD_NAME, MOD_SYSTEM, debounce, denodeify, extern, getFnName, include, log, onlyIf, setLocalStorage, throttle, timeoutP, workerify, _global,
+  var MOD_NAME, MOD_SYSTEM, debounce, denodeify, extern, getFnName, include, log, onlyIf, setLocalStorage, throttle, timeoutP, unNew, workerify, _global,
     __slice = [].slice;
 
   _global = (function() {
@@ -317,6 +317,29 @@ Common decorators
     };
   };
 
+  unNew = (function() {
+    var argErr;
+    argErr = new Error("Invalid argument to function unNew");
+    return function() {
+      var args, constructor, func, initArgs;
+      initArgs = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+      constructor = initArgs[0], args = 2 <= initArgs.length ? __slice.call(initArgs, 1) : [];
+      if ((constructor == null) || typeof constructor !== 'function') {
+        throw argErr;
+      }
+      func = function() {
+        var fnArgs;
+        fnArgs = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
+        return new (Function.prototype.bind.apply(constructor, [constructor].concat(fnArgs)));
+      };
+      if (args.length) {
+        return func.apply(context, args);
+      } else {
+        return func;
+      }
+    };
+  })();
+
   extern({
     setLocalStorage: setLocalStorage,
     onlyIf: onlyIf,
@@ -325,7 +348,8 @@ Common decorators
     throttle: throttle,
     denodeify: denodeify,
     log: log,
-    workerify: workerify
+    workerify: workerify,
+    unNew: unNew
   });
 
 }).call(this);

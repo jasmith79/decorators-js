@@ -100,7 +100,7 @@ log = (fn) => (args...) ->
     when 'object' then JSON.stringify res
     when 'string' then res
     else res.toString()
-      
+
   console.log "Function #{getFnName fn} called with arguments #{args} and yielded #{res}"
   return res
 
@@ -171,6 +171,7 @@ timeoutP = do ->
     return if fn? then func else (fnArg) -> timeoutP timeout, fnArg
 
 #workerify :: (a -> b) -> (a -> b)
+#Runs the passed in function in a Web Worker and returns a Promise of the result
 workerify = (fn) ->
   blob   = new Blob ["onmessage = function(e) { postMessage((#{fn})(e)); })"]
   url    = URL.createURLObject blob
@@ -178,14 +179,23 @@ workerify = (fn) ->
   URL.revokeURLObject url
   return (arg) ->
     worker.postMessage arg
-    #TODO change this to some sort of event streamy thing.
-    #Async function from ES 2016? CSP channel? Observable?
     return new Promise (resolve, reject) ->
       listener = (e) ->
         worker.removeEventListener 'message', listener
         resolve e.data
 
       worker.addEventListener 'message', listener
+
+#unNew :: (a -> b) -> [a] -> b
+#Wraps a constructor so that it may be not only called without new but used with .apply()
+unNew = do ->
+  argErr = new Error "Invalid argument to function unNew"
+  return (initArgs...) ->
+    [constructor, args...] = initArgs
+    if not constructor? or typeof constructor isnt 'function' then throw argErr
+    func = (fnArgs...) -> new (Function::bind.apply constructor, [constructor].concat(fnArgs))
+
+    return if args.length then func.apply context, args else func
 
 extern {
   setLocalStorage
@@ -196,4 +206,5 @@ extern {
   denodeify
   log
   workerify
+  unNew
 }

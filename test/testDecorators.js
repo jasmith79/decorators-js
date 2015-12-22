@@ -293,4 +293,26 @@ Unit tests for decorators.js
     });
   });
 
+  describe('unNew', function() {
+    return it('Should allow a constructor function to be `apply`ed', function() {
+      var allAtOnce, arr, dater, foo, januaryFirst2015, method, time1, time2;
+      januaryFirst2015 = 1422766800000;
+      arr = [2015, 1, 1];
+      dater = d.unNew(Date);
+      allAtOnce = d.unNew(Date, 2015, 1, 1);
+      time1 = dater.apply(null, arr).getTime();
+      time2 = allAtOnce.getTime();
+      assert.equal(time1, januaryFirst2015);
+      assert.equal(time2, januaryFirst2015);
+      method = {
+        Foo: function() {
+          return this.a = 3;
+        }
+      };
+      foo = d.unNew(method.Foo)();
+      assert.ok(foo instanceof method.Foo);
+      return assert.equal(foo.a, 3);
+    });
+  });
+
 }).call(this);
