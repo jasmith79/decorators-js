@@ -2,209 +2,184 @@
 
 ###
 Common decorators
-#@author Jared Smith
+@author Jared Smith
+Remember to compile with the -b (bare) flag!
 ###
 
-_global = switch
-  when window? then window
-  when global? then global
-  when this?   then this
-  else {}
+((root, main) ->
+  MOD_NAME = 'Decorators'
+  switch
+    when module? and module.exports?                then module.exports = main(root)
+    when typeof define is 'function' and define.amd then define(main(root))
+    else root[MOD_NAME] = main(root)
+)((if window? then window else null), (_global)->
+  'use strict'
 
-MOD_NAME = 'Decorators'
-MOD_SYSTEM = switch
-  when module? and module.exports? and typeof require is 'function'   then 'commonJS'
-  when typeof requirejs is 'function' and typeof define is 'function' then 'AMD'
-  when System? and typeof System.import is 'function'                 then 'systemJS'
-  else null
+  #getFnName :: a -> b -> String
+  #Has IE workaround for lack of function name property on Functions
+  getFnName = (fn) ->
+    if typeof fn isnt 'function' then throw new Error "Non function passed to getFnName"
+    return if fn.name? then fn.name else fn.toString().match(/^\s*function\s*(\S*)\s*\(/)[1]
 
-### Utils ###
-
-#include :: String, String -> a
-include = (identifier, property = identifier) -> switch MOD_SYSTEM
-  when 'commonJS' then require identifier
-  when 'AMD'      then throw new Error "Asynchronous Modules not supported"
-  when 'systemJS' then _global.System.import identifier
-  else (_global[property] or
-    throw new Error "Unable to import module #{identifier}, no global property #{property}")
-
-#extern :: a -> Null
-extern = (a) ->
-  switch MOD_SYSTEM
-    when 'commonJS' then module.exports = a
-    when 'AMD'      then throw new Error "Asynchronous Modules not supported"
-    when 'systemJS' then _global.System.set MOD_NAME, System.newModule(a)
-    else _global[MOD_NAME] = a
-
-#getFnName :: a -> b -> String
-#Has IE workaround for lack of function name property on Functions
-getFnName = (fn) ->
-  if typeof fn isnt 'function' then throw new Error "Non function passed to getFnName"
-  return if fn.name? then fn.name else fn.toString().match(/^\s*function\s*(\S*)\s*\(/)[1]
-
-
-### Decorators ###
-
-
-#onlyIf :: a -> b -> a -> b
-#onlyIf :: a -> b -> Null -> Null
-#onlyIf :: [a] -> b -> [a] -> b
-#onlyIf :: [a] -> b -> [Null] -> Null
-onlyIf = (fn) => (args...) ->
-  test    = if args.length is 1 and Array.isArray args[0] then args[0] else args
-  passed  = if fn.length and test.length is 0 then false else test.every((x) -> x?)
-  context = if this is _global then null else this
-  return if passed then fn.apply context, args else null
-
-#debounce :: Int -> (a -> Null) -> Int
-#Delay in milliseconds. Returns the timer ID so caller can cancel
-debounce = (delay, fn) =>
-  if not delay? then throw Error "Function debounce called with no timeout."
-  timer   = null
-  func    = (args...) ->
+  #onlyIf :: a -> b -> a -> b
+  #onlyIf :: a -> b -> Null -> Null
+  #onlyIf :: [a] -> b -> [a] -> b
+  #onlyIf :: [a] -> b -> [Null] -> Null
+  onlyIf = (fn) => (args...) ->
+    test    = if args.length is 1 and Array.isArray args[0] then args[0] else args
+    passed  = if fn.length and test.length is 0 then false else test.every((x) -> x?)
     context = if this is _global then null else this
-    clearTimeout timer
-    timer = setTimeout (-> fn.apply context, args), delay
-    return timer
+    return if passed then fn.apply context, args else null
 
-  return if fn? then func else (fnArg) -> debounce(delay, fnArg)
-
-#throttle :: Int -> (a -> Null) -> Int
-#Delay in milliseconds. Returns the timer ID so caller can cancel
-throttle = (delay, fn) =>
-  if not delay? then throw Error "Function throttle called with no timeout."
-  last    = null
-  timer   = null
-  func    = (args...) ->
-    context = if this is _global then null else this
-    now = Date.now()
-    if last? and now < last + delay
+  #debounce :: Int -> (a -> Null) -> Int
+  #Delay in milliseconds. Returns the timer ID so caller can cancel
+  debounce = (delay, fn) =>
+    if not delay? then throw Error "Function debounce called with no timeout."
+    timer   = null
+    func    = (args...) ->
+      context = if this is _global then null else this
       clearTimeout timer
-      timer = setTimeout (->
+      timer = setTimeout (-> fn.apply context, args), delay
+      return timer
+
+    return if fn? then func else (fnArg) -> debounce(delay, fnArg)
+
+  #throttle :: Int -> (a -> Null) -> Int
+  #Delay in milliseconds. Returns the timer ID so caller can cancel
+  throttle = (delay, fn) =>
+    if not delay? then throw Error "Function throttle called with no timeout."
+    last    = null
+    timer   = null
+    func    = (args...) ->
+      context = if this is _global then null else this
+      now = Date.now()
+      if last? and now < last + delay
+        clearTimeout timer
+        timer = setTimeout (->
+          last = now
+          fn.apply context, args), delay
+
+      else
         last = now
-        fn.apply context, args), delay
+        fn.apply context, args
 
-    else
-      last = now
-      fn.apply context, args
+      return timer
 
-    return timer
+    return if fn? then func else (fnArg) -> throttle(delay, fnArg)
 
-  return if fn? then func else (fnArg) -> throttle(delay, fnArg)
-
-#log :: (a -> a) -> [a] -> a
-log = (fn) => (args...) ->
-  context = if this is _global then null else this
-  res = fn.apply context, args
-  logged = switch typeof res
-    when 'object' then JSON.stringify res
-    when 'string' then res
-    else res.toString()
-
-  console.log "Function #{getFnName fn} called with arguments #{args} and yielded #{res}"
-  return res
-
-#setLocalStorage :: (Event -> [String]), String, String -> Event -> Event
-#meant to decorate an event handler with adding the current value (or whatever desired property) of
-#the event target to local storage. The check on the return value of the function allows the
-#decorated function to supply alternative values for setting to localStorage.
-setLocalStorage = (fn, prop = 'label', val = 'value') -> (e) ->
-  result = fn e
-
-  #event handlers preeety much *never* return an array, so this should be fine
-  if Array.isArray result
-      [key, value] = result
-
-  #if relevant data is not supplied by the fn we're decorating:
-  #first clause is for paper-menus, second for paper-inputs
-  key   ?= e.target[prop] or e.target.parentNode.innerText.trim()
-  value ?= (switch typeof e.target[val]
-      when 'string', 'undefined' then e.target[val]
-      else e.target[val].toString()).trim()
-
-  if key and value? then localStorage.setItem key, value
-  return e
-
-#denodeify :: (a -> b) -> [a] -> Promise b
-denodeify = (fn) =>
-  return (args...) ->
+  #log :: (a -> a) -> [a] -> a
+  log = (fn) => (args...) ->
     context = if this is _global then null else this
-    return new Promise (resolve, reject) ->
-      fn.apply(context, args.concat([
-        ((err, resArgs...) ->
-          if err? then reject err
-          res = switch resArgs.length
-            when 0 then true
-            when 1 then resArgs[0]
-            else resArgs
-          resolve res)]))
+    res = fn.apply context, args
+    logged = switch typeof res
+      when 'object' then JSON.stringify res
+      when 'string' then res
+      else res.toString()
 
-#timeoutP :: Int -> (a -> Promise(b)) -> Promise(b)
-#timeout in milliseconds
-timeoutP = do ->
-  err = new Error """
-    Sorry it is taking an unusually long time to retrieve the data you requested. If you are not
-    experiencing the awesome in the next few seconds, retry your request or reload the page.
-    Sorry for any inconvenience."""
+    console.log "Function #{getFnName fn} called with arguments #{args} and yielded #{res}"
+    return res
 
-  return (timeout, fn) =>
-    if not timeout? then throw new Error "Function timeoutP called with no timeout."
+  #setLocalStorage :: (Event -> [String]), String, String -> Event -> Event
+  #meant to decorate an event handler with adding the current value (or whatever desired property) of
+  #the event target to local storage. The check on the return value of the function allows the
+  #decorated function to supply alternative values for setting to localStorage.
+  setLocalStorage = (fn, prop = 'label', val = 'value') -> (e) ->
+    result = fn e
 
-    func = (args...) ->
+    #event handlers preeety much *never* return an array, so this should be fine
+    if Array.isArray result
+        [key, value] = result
+
+    #if relevant data is not supplied by the fn we're decorating:
+    #first clause is for paper-menus, second for paper-inputs
+    key   ?= e.target[prop] or e.target.parentNode.innerText.trim()
+    value ?= (switch typeof e.target[val]
+        when 'string', 'undefined' then e.target[val]
+        else e.target[val].toString()).trim()
+
+    if key and value? then localStorage.setItem key, value
+    return e
+
+  #denodeify :: (a -> b) -> [a] -> Promise b
+  denodeify = (fn) =>
+    return (args...) ->
       context = if this is _global then null else this
       return new Promise (resolve, reject) ->
-        promise = fn.apply context, args
-        timer = setTimeout (-> reject err), timeout
-        promise.then(
-          ((val) ->
-            clearTimeout testTimer
-            clearTimeout timer
-            resolve val),
+        fn.apply(context, args.concat([
+          ((err, resArgs...) ->
+            if err? then reject err
+            res = switch resArgs.length
+              when 0 then true
+              when 1 then resArgs[0]
+              else resArgs
+            resolve res)]))
 
-          ((e) ->
-            clearTimeout timer
-            clearTimeout testTimer
-            reject e))
+  #timeoutP :: Int -> (a -> Promise(b)) -> Promise(b)
+  #timeout in milliseconds
+  timeoutP = do ->
+    err = new Error """
+      Sorry it is taking an unusually long time to retrieve the data you requested. If you are not
+      experiencing the awesome in the next few seconds, retry your request or reload the page.
+      Sorry for any inconvenience."""
 
-        return null
+    return (timeout, fn) =>
+      if not timeout? then throw new Error "Function timeoutP called with no timeout."
 
-    return if fn? then func else (fnArg) -> timeoutP timeout, fnArg
+      func = (args...) ->
+        context = if this is _global then null else this
+        return new Promise (resolve, reject) ->
+          promise = fn.apply context, args
+          timer = setTimeout (-> reject err), timeout
+          promise.then(
+            ((val) ->
+              clearTimeout testTimer
+              clearTimeout timer
+              resolve val),
 
-#workerify :: (a -> b) -> (a -> b)
-#Runs the passed in function in a Web Worker and returns a Promise of the result
-workerify = (fn) ->
-  blob   = new Blob ["onmessage = function(e) { postMessage((#{fn})(e)); })"]
-  url    = URL.createURLObject blob
-  worker = new Worker(url)
-  URL.revokeURLObject url
-  return (arg) ->
-    worker.postMessage arg
-    return new Promise (resolve, reject) ->
-      listener = (e) ->
-        worker.removeEventListener 'message', listener
-        resolve e.data
+            ((e) ->
+              clearTimeout timer
+              clearTimeout testTimer
+              reject e))
 
-      worker.addEventListener 'message', listener
+          return null
 
-#unNew :: (a -> b) -> [a] -> b
-#Wraps a constructor so that it may be not only called without new but used with .apply()
-unNew = do ->
-  argErr = new Error "Invalid argument to function unNew"
-  return (initArgs...) ->
-    [constructor, args...] = initArgs
-    if not constructor? or typeof constructor isnt 'function' then throw argErr
-    func = (fnArgs...) -> new (Function::bind.apply constructor, [constructor].concat(fnArgs))
+      return if fn? then func else (fnArg) -> timeoutP timeout, fnArg
 
-    return if args.length then func.apply context, args else func
+  #workerify :: (a -> b) -> (a -> b)
+  #Runs the passed in function in a Web Worker and returns a Promise of the result
+  workerify = (fn) ->
+    blob   = new Blob ["onmessage = function(e) { postMessage((#{fn})(e)); })"]
+    url    = URL.createURLObject blob
+    worker = new Worker(url)
+    URL.revokeURLObject url
+    return (arg) ->
+      worker.postMessage arg
+      return new Promise (resolve, reject) ->
+        listener = (e) ->
+          worker.removeEventListener 'message', listener
+          resolve e.data
 
-extern {
-  setLocalStorage
-  onlyIf
-  timeoutP
-  debounce
-  throttle
-  denodeify
-  log
-  workerify
-  unNew
-}
+        worker.addEventListener 'message', listener
+
+  #unNew :: (a -> b) -> [a] -> b
+  #Wraps a constructor so that it may be not only called without new but used with .apply()
+  unNew = do ->
+    argErr = new Error "Invalid argument to function unNew"
+    return (initArgs...) ->
+      [constructor, args...] = initArgs
+      if not constructor? or typeof constructor isnt 'function' then throw argErr
+      func = (fnArgs...) -> new (Function::bind.apply constructor, [constructor].concat(fnArgs))
+
+      return if args.length then func.apply context, args else func
+
+  return {
+    setLocalStorage
+    onlyIf
+    timeoutP
+    debounce
+    throttle
+    denodeify
+    log
+    workerify
+    unNew
+  })
