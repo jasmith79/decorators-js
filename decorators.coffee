@@ -10,7 +10,7 @@ Remember to compile with the -b (bare) flag!
   MOD_NAME = 'Decorators'
   switch
     when module? and module.exports?                then module.exports = main(root)
-    when typeof define is 'function' and define.amd then define(main(root))
+    when typeof define is 'function' and define.amd then define(main.bind(root, root))
     else root[MOD_NAME] = main(root)
 )((if window? then window else null), (_global)->
   'use strict'

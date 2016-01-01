@@ -14,7 +14,7 @@ var __slice = [].slice;
     case !((typeof module !== "undefined" && module !== null) && (module.exports != null)):
       return module.exports = main(root);
     case !(typeof define === 'function' && define.amd):
-      return define(main(root));
+      return define(main.bind(root, root));
     default:
       return root[MOD_NAME] = main(root);
   }
