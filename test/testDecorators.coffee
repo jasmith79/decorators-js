@@ -89,6 +89,7 @@ describe 'onlyIf', ->
 
 describe 'setLocalStorage', ->
   it 'should cache the result of an event handler in localStorage', ->
+    #stub out localStorage
     `localStorage = {
        _store: {},
        getItem: function(k) { return this._store[k]; },
@@ -230,3 +231,17 @@ describe 'unNew', ->
     foo = d.unNew(method.Foo)()
     assert.ok foo instanceof method.Foo
     assert.equal foo.a, 3
+
+describe 'unGather', ->
+  it 'Conditionally unnests rest parameters', ->
+    fn = d.unGather (args...) -> args.reduce(((acc, x) -> acc + x), 0)
+    assert.equal fn(1,2,3), fn([1,2,3])
+    obj =
+      foo: 0
+      method: d.unGather (args...) -> this.foo = args.reduce(((acc, x) -> acc + x), 0)
+
+    obj.method 1,2,3
+    assert.equal obj.foo, 6
+    obj.foo = 0
+    obj.method [1,2,3]
+    assert.equal obj.foo, 6

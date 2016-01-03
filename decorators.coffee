@@ -162,7 +162,8 @@ Remember to compile with the -b (bare) flag!
         worker.addEventListener 'message', listener
 
   #unNew :: (a -> b) -> [a] -> b
-  #Wraps a constructor so that it may be not only called without new but used with .apply()
+  #Wraps a constructor so that it may be not only called without new but used with .apply(). Note
+  #unlike ramda's `construct` the unNewed constructor is variadic.
   unNew = do ->
     argErr = new Error "Invalid argument to function unNew"
     return (initArgs...) ->
@@ -171,6 +172,20 @@ Remember to compile with the -b (bare) flag!
       func = (fnArgs...) -> new (Function::bind.apply constructor, [constructor].concat(fnArgs))
 
       return if args.length then func.apply context, args else func
+
+  #unGather :: a -> b -> [a] -> b
+  #Conditionally unnests the arguments to a function, useful for functions that use rest params to gather args.
+  unGather = do ->
+    argErr = new Error "Invalid argument to function applied"
+    return (args...) =>
+      [fn, initArgs...] = args
+      if typeof fn isnt 'function' then throw argErr
+      func = (fnArgs...) ->
+        context = if this is _global then null else this
+        params = if fnArgs.length is 1 and Array.isArray fnArgs[0] then fnArgs[0] else fnArgs
+        return fn.apply context, params
+
+      return if initArgs.length then func.apply this, initArgs else func
 
   return {
     setLocalStorage
@@ -182,4 +197,5 @@ Remember to compile with the -b (bare) flag!
     log
     workerify
     unNew
+    unGather
   })
