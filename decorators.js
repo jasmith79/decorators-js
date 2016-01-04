@@ -22,7 +22,7 @@ Remember to compile with the -b (bare) flag!
     }
   })((typeof window !== "undefined" && window !== null ? window : null), function(_global) {
     'use strict';
-    var debounce, denodeify, getFnName, log, onlyIf, setLocalStorage, throttle, timeoutP, unGather, unNew, workerify;
+    var checkJSON, debounce, denodeify, getFnName, log, onlyIf, setLocalStorage, throttle, timeoutP, unGather, unNew, workerify;
     getFnName = function(fn) {
       if (typeof fn !== 'function') {
         throw new Error("Non function passed to getFnName");
@@ -304,6 +304,16 @@ Remember to compile with the -b (bare) flag!
         };
       })(this);
     })();
+    checkJSON = function(json) {
+      switch (false) {
+        case typeof json === 'string':
+        case !(json.length < 3):
+        case !json.match(/fail/i):
+          return null;
+        default:
+          return JSON.parse(json);
+      }
+    };
     return {
       setLocalStorage: setLocalStorage,
       onlyIf: onlyIf,
@@ -314,7 +324,8 @@ Remember to compile with the -b (bare) flag!
       log: log,
       workerify: workerify,
       unNew: unNew,
-      unGather: unGather
+      unGather: unGather,
+      checkJSON: checkJSON
     };
   });
 

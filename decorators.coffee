@@ -187,6 +187,13 @@ Remember to compile with the -b (bare) flag!
 
       return if initArgs.length then func.apply this, initArgs else func
 
+  #checkJSON :: JSON -> a
+  #checkJSON :: JSON -> null
+  checkJSON = (json) ->
+    return switch
+      when typeof json isnt 'string', json.length < 3, json.match /fail/i then null
+      else JSON.parse json
+
   return {
     setLocalStorage
     onlyIf
@@ -198,4 +205,5 @@ Remember to compile with the -b (bare) flag!
     workerify
     unNew
     unGather
+    checkJSON
   })
