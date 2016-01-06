@@ -76,7 +76,9 @@ Remember to compile with the -b (bare) flag!
       when 'string' then res
       else res.toString()
 
-    console.log "Function #{getFnName fn} called with arguments #{args} and yielded #{res}"
+    name = getFnName(fn) or "Anonymous"
+    calledArgs = if args.length then args else "none"
+    console.log "Function #{name} called with arguments #{calledArgs} and yielded #{res}"
     return res
 
   #setLocalStorage :: (Event -> [String]), String, String -> Event -> Event
