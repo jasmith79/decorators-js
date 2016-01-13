@@ -15,81 +15,134 @@ Remember to compile with the -b (bare) flag!
 )((if window? then window else null), (_global)->
   'use strict'
 
-  #getFnName :: a -> b -> String
+  _invalidArgumentError = new TypeError "Invalid argument"
+
+  #_getFnName :: a -> b -> String
   #Has IE workaround for lack of function name property on Functions
-  getFnName = (fn) ->
-    if typeof fn isnt 'function' then throw new Error "Non function passed to getFnName"
+  _getFnName = (fn) ->
+    if typeof fn isnt 'function' then throw _invalidArgumentError
     return if fn.name? then fn.name else fn.toString().match(/^\s*function\s*(\S*)\s*\(/)[1]
 
-  #onlyIf :: a -> b -> a -> b
-  #onlyIf :: a -> b -> Null -> Null
-  #onlyIf :: [a] -> b -> [a] -> b
+  #_isArray :: a -> Boolean
+  #Has IE workaround for lack of Array.isArray
+  _isArray = (a) -> (Object::toString.call(a) is "[object Array]") or (a instanceof Array)
+
+  #_noGlobalCtx :: (* -> a) -> (* -> a)
+  #Ensures passed-in function is not executed with global context set to `this`. Returned function
+  #is automatically curried.
+  _noGlobalCtx = (fn) ->
+    if typeof fn isnt 'function' then throw _invalidArgumentError
+    return curry fn.length, (args...) ->
+      context = if this is _global then null else this
+      return fn.apply context, args
+
+  #curry ([a] -> a) -> ([a] -> a)
+  #curry Int -> ([a] -> a) -> ([a] -> a)
+  curry = do ->
+    _curry = (fn, args...) -> (fnArgs...) -> fn.apply(this, args.concat(fnArgs))
+    curry = (n, f) ->
+      fn = null
+      length = 0
+      switch
+        when f?
+          (if typeof f isnt 'function' or typeof n isnt 'number' then throw _invalidArgumentError)
+          [fn, length] = [f, n]
+        when typeof n is 'function'
+          [fn, length] = [n, n.length]
+        when typeof n is 'number'
+          `return function(fn) { return curry.call(this, n, fn); }`
+        else
+          throw _invalidArgumentError
+
+      return (fnArgs...) ->
+        context = if this is _global then null else this
+        if fnArgs.length < length
+          concated = [fn].concat fnArgs
+          currLength = length - fnArgs.length
+          val =
+            if (currLength > 0)
+              #curry(currLength, _curry.apply(this, concated))
+              curry(currLength, _curry.apply(context, concated))
+            else
+              #_curry.apply(this, concated)
+              _curry.apply(context, concated)
+          return val
+        else
+          #fn.apply this, fnArgs
+          fn.apply context, fnArgs
+
+    return curry
+
+  #unGather :: a -> b -> [a] -> b
+  #Conditionally unnests the arguments to a function, useful for functions that use rest params to
+  #gather args.
+  unGather = (args...) =>
+    [fn, initArgs...] = args
+    if typeof fn isnt 'function' then throw _invalidArgumentError
+    func = _noGlobalCtx (fnArgs...) ->
+      params = if fnArgs.length is 1 and _isArray fnArgs[0] then fnArgs[0] else fnArgs
+      return fn.apply this, params
+
+    return if initArgs.length then func.apply this, initArgs else func
+
+  #onlyIf :: a   -> b -> a      -> b
+  #onlyIf :: a   -> b -> Null   -> Null
+  #onlyIf :: [a] -> b -> [a]    -> b
   #onlyIf :: [a] -> b -> [Null] -> Null
-  onlyIf = (fn) => (args...) ->
-    test    = if args.length is 1 and Array.isArray args[0] then args[0] else args
-    passed  = if fn.length and test.length is 0 then false else test.every((x) -> x?)
-    context = if this is _global then null else this
-    return if passed then fn.apply context, args else null
+  onlyIf = (fn) ->
+    if typeof fn isnt 'function' then throw _invalidArgumentError
+    return _noGlobalCtx unGather (args...) ->
+      passed  = if fn.length and args.length is 0 then false else args.every((x) -> x?)
+      return if passed then fn.apply this, args else null
 
   #debounce :: Int -> (a -> Null) -> Int
   #Delay in milliseconds. Returns the timer ID so caller can cancel
-  debounce = (delay, fn) =>
-    if not delay? then throw Error "Function debounce called with no timeout."
-    timer   = null
-    func    = (args...) ->
-      context = if this is _global then null else this
+  debounce = curry (delay, fn) ->
+    timer = null
+    return _noGlobalCtx (args...) ->
       clearTimeout timer
-      timer = setTimeout (-> fn.apply context, args), delay
+      timer = setTimeout (=> fn.apply this, args), delay
       return timer
-
-    return if fn? then func else (fnArg) -> debounce(delay, fnArg)
 
   #throttle :: Int -> (a -> Null) -> Int
   #Delay in milliseconds. Returns the timer ID so caller can cancel
-  throttle = (delay, fn) =>
-    if not delay? then throw Error "Function throttle called with no timeout."
-    last    = null
-    timer   = null
-    func    = (args...) ->
-      context = if this is _global then null else this
+  throttle = curry (delay, fn) ->
+    last = null
+    timer = null
+    return _noGlobalCtx (args...) ->
       now = Date.now()
       if last? and now < last + delay
         clearTimeout timer
-        timer = setTimeout (->
+        timer = setTimeout (=>
           last = now
-          fn.apply context, args), delay
+          fn.apply this, args), delay
 
       else
         last = now
-        fn.apply context, args
-
-      return timer
-
-    return if fn? then func else (fnArg) -> throttle(delay, fnArg)
+        fn.apply this, args
 
   #log :: (a -> a) -> [a] -> a
-  log = (fn) => (args...) ->
-    context = if this is _global then null else this
-    res = fn.apply context, args
-    logged = switch typeof res
+  log = (fn) -> curry fn.length, _noGlobalCtx (args...) ->
+    res = fn.apply this, args
+    str = switch typeof res
       when 'object' then JSON.stringify res
       when 'string' then res
       else res.toString()
 
-    name = getFnName(fn) or "Anonymous"
+    name = _getFnName(fn) or "Anonymous"
     calledArgs = if args.length then args else "none"
-    console.log "Function #{name} called with arguments #{calledArgs} and yielded #{res}"
+    console.log "Function #{name} called with arguments #{calledArgs} and yielded #{str}"
     return res
 
   #setLocalStorage :: (Event -> [String]), String, String -> Event -> Event
-  #meant to decorate an event handler with adding the current value (or whatever desired property) of
-  #the event target to local storage. The check on the return value of the function allows the
+  #meant to decorate an event handler with adding the current value (or whatever desired property)
+  #of the event target to local storage. The check on the return value of the function allows the
   #decorated function to supply alternative values for setting to localStorage.
   setLocalStorage = (fn, prop = 'label', val = 'value') -> (e) ->
     result = fn e
 
     #event handlers preeety much *never* return an array, so this should be fine
-    if Array.isArray result
+    if _isArray result
         [key, value] = result
 
     #if relevant data is not supplied by the fn we're decorating:
@@ -104,10 +157,9 @@ Remember to compile with the -b (bare) flag!
 
   #denodeify :: (a -> b) -> [a] -> Promise b
   denodeify = (fn) =>
-    return (args...) ->
-      context = if this is _global then null else this
+    return _noGlobalCtx (args...) ->
       return new Promise (resolve, reject) ->
-        fn.apply(context, args.concat([
+        fn.apply(this, args.concat([
           ((err, resArgs...) ->
             if err? then reject err
             res = switch resArgs.length
@@ -166,28 +218,12 @@ Remember to compile with the -b (bare) flag!
   #unNew :: (a -> b) -> [a] -> b
   #Wraps a constructor so that it may be not only called without new but used with .apply(). Note
   #unlike ramda's `construct` the unNewed constructor is variadic.
-  unNew = do ->
-    argErr = new Error "Invalid argument to function unNew"
-    return (initArgs...) ->
-      [constructor, args...] = initArgs
-      if not constructor? or typeof constructor isnt 'function' then throw argErr
-      func = (fnArgs...) -> new (Function::bind.apply constructor, [constructor].concat(fnArgs))
+  unNew = (initArgs...) ->
+    [constructor, args...] = initArgs
+    if not constructor? or typeof constructor isnt 'function' then throw _invalidArgumentError
+    func = (fnArgs...) -> new (Function::bind.apply constructor, [constructor].concat(fnArgs))
 
-      return if args.length then func.apply context, args else func
-
-  #unGather :: a -> b -> [a] -> b
-  #Conditionally unnests the arguments to a function, useful for functions that use rest params to gather args.
-  unGather = do ->
-    argErr = new Error "Invalid argument to function applied"
-    return (args...) =>
-      [fn, initArgs...] = args
-      if typeof fn isnt 'function' then throw argErr
-      func = (fnArgs...) ->
-        context = if this is _global then null else this
-        params = if fnArgs.length is 1 and Array.isArray fnArgs[0] then fnArgs[0] else fnArgs
-        return fn.apply context, params
-
-      return if initArgs.length then func.apply this, initArgs else func
+    return if args.length then func.apply this, args else func
 
   #checkJSON :: JSON -> a
   #checkJSON :: JSON -> null

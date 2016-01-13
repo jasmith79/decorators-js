@@ -70,7 +70,7 @@ describe 'onlyIf', ->
     method =
       num: 3
       add: d.onlyIf (n) -> n + this.num
-
+    testNum = 0
     assert.equal 3, gives3(15)
     assert.equal 3, gives3('foo')
     assert.equal 3, gives3({})
