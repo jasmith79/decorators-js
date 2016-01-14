@@ -73,7 +73,7 @@ Remember to compile with the -b (bare) flag!
 
     return curry
 
-  #unGather :: a -> b -> [a] -> b
+  #unGather :: (* -> a) -> (* -> a)
   #Conditionally unnests the arguments to a function, useful for functions that use rest params to
   #gather args.
   unGather = (args...) =>
@@ -85,10 +85,8 @@ Remember to compile with the -b (bare) flag!
 
     return if initArgs.length then func.apply this, initArgs else func
 
-  #onlyIf :: a   -> b -> a      -> b
-  #onlyIf :: a   -> b -> Null   -> Null
-  #onlyIf :: [a] -> b -> [a]    -> b
-  #onlyIf :: [a] -> b -> [Null] -> Null
+  #onlyIf :: (* -> a) -> (* -> a)
+  #onlyIf :: (* -> a) -> (null -> null)
   onlyIf = (fn) ->
     if typeof fn isnt 'function' then throw _invalidArgumentError
     return _noGlobalCtx unGather (args...) ->
@@ -134,7 +132,7 @@ Remember to compile with the -b (bare) flag!
     console.log "Function #{name} called with arguments #{calledArgs} and yielded #{str}"
     return res
 
-  #setLocalStorage :: (Event -> [String]), String, String -> Event -> Event
+  #setLocalStorage :: (Event -> [String]), String, String -> (Event -> Event)
   #meant to decorate an event handler with adding the current value (or whatever desired property)
   #of the event target to local storage. The check on the return value of the function allows the
   #decorated function to supply alternative values for setting to localStorage.
@@ -155,7 +153,7 @@ Remember to compile with the -b (bare) flag!
     if key and value? then localStorage.setItem key, value
     return e
 
-  #denodeify :: (a -> b) -> [a] -> Promise b
+  #denodeify :: (* -> a) -> (* -> Promise a)
   denodeify = (fn) =>
     return _noGlobalCtx (args...) ->
       return new Promise (resolve, reject) ->
@@ -199,7 +197,7 @@ Remember to compile with the -b (bare) flag!
 
       return if fn? then func else (fnArg) -> timeoutP timeout, fnArg
 
-  #workerify :: (a -> b) -> (a -> b)
+  #workerify :: (a -> a) -> (a -> Promise a)
   #Runs the passed in function in a Web Worker and returns a Promise of the result
   workerify = (fn) ->
     blob   = new Blob ["onmessage = function(e) { postMessage((#{fn})(e)); })"]
@@ -215,7 +213,7 @@ Remember to compile with the -b (bare) flag!
 
         worker.addEventListener 'message', listener
 
-  #unNew :: (a -> b) -> [a] -> b
+  #unNew :: (* -> {k:v}) -> (* -> {k:v})
   #Wraps a constructor so that it may be not only called without new but used with .apply(). Note
   #unlike ramda's `construct` the unNewed constructor is variadic.
   unNew = (initArgs...) ->
@@ -227,10 +225,25 @@ Remember to compile with the -b (bare) flag!
 
   #checkJSON :: JSON -> a
   #checkJSON :: JSON -> null
-  checkJSON = (json) ->
-    return switch
-      when typeof json isnt 'string', json.length < 3, json.match /fail/i then null
-      else JSON.parse json
+  checkJSON = (f) ->
+    if typeof f isnt 'function' then throw _invalidArgumentError
+    _notJSONError = new Error("Function #{getFnName f} should return a valid JSON string")
+    fn = ifOnly _noGlobalCtx f
+    return (args...) ->
+      json = fn.apply this, args
+      if typeof json isnt 'string' then throw _notJSONError
+      return switch
+        when json.length < 3, not json[0].match /[\[,\{,0-9,n,t,f]/i then null
+        else JSON.parse json
+
+  #runTime :: (* -> *) -> (* -> *)
+  runTime = (f) ->
+    fn = log f
+    return (args...) ->
+      console.time(getFnName f)
+      res = fn.apply this, args
+      console.timeEnd(getFnName f)
+      return res
 
   return {
     setLocalStorage
@@ -244,4 +257,5 @@ Remember to compile with the -b (bare) flag!
     unNew
     unGather
     checkJSON
+    runTime
   })
