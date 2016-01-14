@@ -50,9 +50,10 @@ have to explicitly bind the context before handing it to the decorator.
 ###unNew
   `unNew :: (* -> {k:v}) -> (* -> {k:v})`
 
-  Similar to ramda's `Construct`, `unNew` takes a Javascript constructor function and wraps it so
-  that it functions properly when called without the `new` operator. Useful for (among other things)
-  mapping a constructor over a list of configuration objects.
+  Similar to [Ramda's](http://ramdajs.com/0.18.0/index.html) `Construct`, `unNew` takes a
+  Javascript constructor function and wraps it so that it functions properly when called without
+  the `new` operator. Useful for (among other things) mapping a constructor over a list of
+  configuration objects.
 
 ###unGather
   `unGather :: ([[a]] -> a) -> ([a] -> a)`
@@ -105,4 +106,5 @@ have to explicitly bind the context before handing it to the decorator.
   `curry Int -> ([a] -> a) -> ([a] -> a)`
 
   Implemented it because I needed it internally and I've exposed it purely for convenience: I
-  recommend using ramda's or at least loDash's `curry`.
+  recommend using [Ramda's](http://ramdajs.com/0.18.0/index.html) or at least 
+  [lodash's](https://lodash.com/) `curry`.

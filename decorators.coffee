@@ -223,8 +223,8 @@ Remember to compile with the -b (bare) flag!
 
     return if args.length then func.apply this, args else func
 
-  #checkJSON :: JSON -> a
-  #checkJSON :: JSON -> null
+  #checkJSON :: (* -> String) -> (* -> {k:v})
+  #checkJSON :: (* -> String) -> (* -> null)
   checkJSON = (f) ->
     if typeof f isnt 'function' then throw _invalidArgumentError
     _notJSONError = new Error("Function #{getFnName f} should return a valid JSON string")
@@ -236,7 +236,7 @@ Remember to compile with the -b (bare) flag!
         when json.length < 3, not json[0].match /[\[,\{,0-9,n,t,f]/i then null
         else JSON.parse json
 
-  #runTime :: (* -> *) -> (* -> *)
+  #runTime :: (* -> a) -> (* -> a)
   runTime = (f) ->
     fn = log f
     return (args...) ->
@@ -258,4 +258,5 @@ Remember to compile with the -b (bare) flag!
     unGather
     checkJSON
     runTime
+    curry
   })
