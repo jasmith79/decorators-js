@@ -5,59 +5,15 @@ Unit tests for decorators.js
 #@author Jared Smith, INDOT Web Application Developer
 ###
 
-_global = switch
-  when window? then window
-  when global? then global
-  when this? then this
-  else {}
-
-MOD_NAME = 'Test'
-MOD_SYSTEM = switch
-  when module? and module.exports? and typeof require is 'function' then 'commonJS'
-  when typeof requirejs is 'function' and typeof define is 'function' and define.amd? then 'AMD'
-  when System? and typeof System.import is 'function' then 'systemJS'
-  else null
-
-### Utils ###
-
-#include :: String, String -> a
-include = (identifier, property = identifier) -> switch MOD_SYSTEM
-  when 'commonJS' then require identifier
-  when 'AMD' then throw new Error "Asynchronous Modules not supported"
-  when 'systemJS' then _global.System.import identifier
-  else (_global[property] or
-    throw new Error "Unable to import module #{identifier}, no global property #{property}")
-
-#extern :: a -> Null
-extern = (a) ->
-  switch MOD_SYSTEM
-    when 'commonJS' then module.exports = a
-    when 'AMD' then throw new Error "Asynchronous Modules not supported"
-    when 'systemJS' then _global.System.set MOD_NAME, System.newModule(a)
-    else _global[MOD_NAME] = a
-
 #catchHandler :: Error -> Null
 #meant to be called as catch clause of Promise chain
 catchHandler = (err) ->
   console.log err
   return null
 
-#padInt :: Float -> String
-padInt = (num) -> if num > 9 then num.toString() else '0' + num
-
-#capFirst :: String -> String
-capFirst = (str) -> str.slice(0, 1).toUpperCase() + str.slice(1)
-
-#getFnName :: a -> b -> String
-#Has IE workaround for lack of function name property on Functions
-getFnName = (fn) ->
-  if typeof fn isnt 'function' then throw new Error "Non function passed to getFnName"
-  return if fn.name? then fn.name else fn.toString().match(/^\s*function\s*(\S*)\s*\(/)[1]
-
-
 ### Includes ###
 
-d = include '../decorators.js', 'decorator'
+d = require '../decorators.js'
 assert = require 'assert'
 
 ### Tests ###
@@ -75,8 +31,6 @@ describe 'onlyIf', ->
     assert.equal 3, gives3('foo')
     assert.equal 3, gives3({})
     assert.equal null, gives3(null)
-    assert.equal null, gives3([null])
-    assert.equal null, gives3([])
     assert.equal null, gives3()
     assert.equal null, gives3(4, null)
     assert.equal null, gives3(4, undefined)
@@ -248,7 +202,7 @@ describe 'unGather', ->
 
 describe 'trampoline', ->
   it 'Eliminates tail calls', ->
-   `function factorial (n) {
+   `var factorial = function(n) {
       var _factorial = d.trampoline( function myself (acc, n) {
         return n > 0
         ? function () { return myself(acc * n, n - 1); }
@@ -257,3 +211,5 @@ describe 'trampoline', ->
 
       return _factorial(1, n);
    };`
+
+   assert.equal(factorial(32000), Infinity)

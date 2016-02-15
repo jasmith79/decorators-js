@@ -86,11 +86,11 @@ Remember to compile with the -b (bare) flag!
     return if initArgs.length then func.apply this, initArgs else func
 
   #onlyIf :: (* -> a) -> (* -> a)
-  #onlyIf :: (* -> a) -> (null -> null)
+  #onlyIf :: (* -> a) -> (Null -> Null)
   onlyIf = (fn) ->
     if typeof fn isnt 'function' then throw _invalidArgumentError
-    return _noGlobalCtx unGather (args...) ->
-      passed  = if fn.length and args.length is 0 then false else args.every((x) -> x?)
+    return _noGlobalCtx (args...) ->
+      passed = if fn.length and args.length is 0 then false else args.every((x) -> x?)
       return if passed then fn.apply this, args else null
 
   #debounce :: Int -> (a -> Null) -> Int
@@ -246,7 +246,7 @@ Remember to compile with the -b (bare) flag!
       console.timeEnd(name)
       return res
 
-  #trampoline
+  #trampoline :: (* -> a) -> (* -> a)
   trampoline = (fn) -> _noGlobalCtx (args...) ->
     res = fn.apply this, args
     loop

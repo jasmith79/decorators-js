@@ -118,7 +118,7 @@ var __slice = [].slice;
     if (typeof fn !== 'function') {
       throw _invalidArgumentError;
     }
-    return _noGlobalCtx(unGather(function() {
+    return _noGlobalCtx(function() {
       var args, passed;
       args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];
       passed = fn.length && args.length === 0 ? false : args.every(function(x) {
@@ -129,7 +129,7 @@ var __slice = [].slice;
       } else {
         return null;
       }
-    }));
+    });
   };
   debounce = curry(function(delay, fn) {
     var timer;
