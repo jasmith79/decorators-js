@@ -245,3 +245,15 @@ describe 'unGather', ->
     obj.foo = 0
     obj.method [1,2,3]
     assert.equal obj.foo, 6
+
+describe 'trampoline', ->
+  it 'Eliminates tail calls', ->
+   `function factorial (n) {
+      var _factorial = d.trampoline( function myself (acc, n) {
+        return n > 0
+        ? function () { return myself(acc * n, n - 1); }
+        : acc
+      });
+
+      return _factorial(1, n);
+   };`

@@ -239,11 +239,19 @@ Remember to compile with the -b (bare) flag!
   #runTime :: (* -> a) -> (* -> a)
   runTime = (f) ->
     fn = log f
+    name = getFnName f
     return (args...) ->
-      console.time(getFnName f)
+      console.time(name)
       res = fn.apply this, args
-      console.timeEnd(getFnName f)
+      console.timeEnd(name)
       return res
+
+  #trampoline
+  trampoline = (fn) -> _noGlobalCtx (args...) ->
+    res = fn.apply this, args
+    loop
+      if typeof res isnt 'function' then break else res = res()
+    return res
 
   return {
     setLocalStorage
@@ -259,4 +267,5 @@ Remember to compile with the -b (bare) flag!
     checkJSON
     runTime
     curry
+    trampoline
   })
