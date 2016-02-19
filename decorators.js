@@ -382,7 +382,7 @@ var __slice = [].slice;
   };
   return {
     setLocalStorage: setLocalStorage,
-    onlyIf: onlyIf,
+    maybe: onlyIf,
     timeoutP: timeoutP,
     debounce: debounce,
     throttle: throttle,

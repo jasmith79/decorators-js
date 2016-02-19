@@ -255,7 +255,7 @@ Remember to compile with the -b (bare) flag!
 
   return {
     setLocalStorage
-    onlyIf
+    maybe: onlyIf
     timeoutP
     debounce
     throttle

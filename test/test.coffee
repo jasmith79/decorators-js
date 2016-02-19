@@ -18,7 +18,7 @@ assert = require 'assert'
 
 ### Tests ###
 
-describe 'onlyIf', ->
+describe 'maybe', ->
   it 'should not run when some args are null/undefined, otherwise run', ->
     sideEffect = null
     gives3 = d.onlyIf (a) -> 3

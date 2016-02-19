@@ -12,9 +12,9 @@ have to explicitly bind the context before handing it to the decorator.
 
 ##API
 
-###onlyIf
-  `onlyIf :: (* -> a) -> (* -> a)`
-  `onlyIf :: (* -> a) -> (null -> null)`
+###maybe
+  `maybe :: (* -> a) -> (* -> a)`
+  `maybe :: (* -> a) -> (null -> null)`
 
   Returns `null` if any of its arguments are `null` or `undefined`, otherwise returns the result
   of applying the passed-in function to the arguments. If the passed-in function has an arity of
@@ -106,5 +106,5 @@ have to explicitly bind the context before handing it to the decorator.
   `curry Int -> ([a] -> a) -> ([a] -> a)`
 
   Implemented it because I needed it internally and I've exposed it purely for convenience: I
-  recommend using [Ramda's](http://ramdajs.com/0.18.0/index.html) or at least 
+  recommend using [Ramda's](http://ramdajs.com/0.18.0/index.html) or at least
   [lodash's](https://lodash.com/) `curry`.

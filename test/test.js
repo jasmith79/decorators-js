@@ -24,7 +24,7 @@ Unit tests for decorators.js
 
   /* Tests */
 
-  describe('onlyIf', function() {
+  describe('maybe', function() {
     return it('should not run when some args are null/undefined, otherwise run', function() {
       var emptyOk, gives3, method, sideEffect, testNum;
       sideEffect = null;
