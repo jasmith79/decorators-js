@@ -1,0 +1,25 @@
+{
+  "name": "decorators-js",
+  "version": "1.0.0",
+  "description": "Common javascript decorators",
+  "main": "decorators.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jasmith79/decorators-js.git"
+  },
+  "keywords": [
+    "decorators"
+  ],
+  "author": "jasmith79@gmail.com",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jasmith79/decorators-js/issues"
+  },
+  "homepage": "https://github.com/jasmith79/decorators-js"
+}
