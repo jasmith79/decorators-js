@@ -7,7 +7,7 @@
  *
  */
 
-import * as d from './decorators.js';
+import * as d from './decorators.min.js';
 
 //needed for multiple tests
 let sum      = function(a,b,c) { return a + b + c; };
@@ -69,34 +69,47 @@ describe('typeGuard', function() {
   });
 
   it('should work for instances of constructors custom and builtin ctor/literals', function() {
+
+    //internal class
     let array     = d.typeGuard('Array',  identity);
     let regexp    = d.typeGuard('regexp', identity); //testing case-insensitivity
     let date      = d.typeGuard('Date',   identity);
     let error     = d.typeGuard('Error',  identity);
-    let newArray  = d.typeGuard(Array,    identity);
-    let newRegexp = d.typeGuard(RegExp,   identity);
-    let newDate   = d.typeGuard(Date,     identity);
+
+    //instanceof
+    let fnArray   = d.typeGuard(Array,    identity);
+    let fnRegExp  = d.typeGuard(RegExp,   identity);
+    let fnDate    = d.typeGuard(Date,     identity);
     let foo       = new Foo();
     let isFoo     = d.typeGuard(Foo, identity);
     let reg       = /arstast/gmi;
     let arr       = [];
     let now       = new Date();
     let barr      = new Bar();
+
+    //duck-types
+    let otherFoo  = d.typeGuard(new Bar(), identity);
+    let otherArr  = d.typeGuard([], identity);
+
     expect(array(arr)).toBe(arr);
     expect((() => array({}))).toThrowError(TypeError);
-    expect(newArray(arr)).toBe(arr);
-    expect((() => newArray({}))).toThrowError(TypeError);
+    expect(fnArray(arr)).toBe(arr);
+    expect((() => fnArray({}))).toThrowError(TypeError);
     expect(regexp(reg)).toBe(reg);
     expect((() => regexp({}))).toThrowError(TypeError);
-    expect(newRegexp(reg)).toBe(reg);
-    expect((() => newRegexp({}))).toThrowError(TypeError);
+    expect(fnRegExp(reg)).toBe(reg);
+    expect((() => fnRegExp({}))).toThrowError(TypeError);
     expect(date(now)).toBe(now);
     expect((() => date({}))).toThrowError(TypeError);
-    expect(newDate(now)).toBe(now);
-    expect((() => newDate({}))).toThrowError(TypeError);
+    expect(fnDate(now)).toBe(now);
+    expect((() => fnDate({}))).toThrowError(TypeError);
     expect(isFoo(foo)).toBe(foo);
     expect(isFoo(barr)).toBe(barr);
     expect((() => isFoo({}))).toThrowError(TypeError);
+    // expect(otherFoo(barr)).toBe(barr);
+    // expect(() => otherFoo({})).toThrowError(TypeError);
+    expect(otherArr(arr)).toBe(arr);
+    expect(() => otherArr({})).toThrowError(TypeError);
   });
 
   it('should work for builtin namespace objects like Math', function() {
@@ -122,6 +135,20 @@ describe('typeGuard', function() {
     expect(o.fn(1, 2)).toBe(6);
     expect(() => o.fn(null, 2)).toThrowError(TypeError);
   });
+
+  it('should handle polymorphic functions', function() {
+    let poly = d.typeGuard(['string', Date], (a) => {
+      switch (true) {
+        case ('string' === typeof a):
+          return 3;
+        case (a instanceof Date):
+          return 5;
+      }
+    });
+    expect(poly('a')).toBe(3);
+    expect(poly(new Date())).toBe(5);
+    expect(() => poly(42)).toThrowError(TypeError);
+  })
 });
 
 describe('unGather', function() {

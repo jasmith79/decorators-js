@@ -6,6 +6,8 @@ SRC   := src/decorators.es
 TES   := spec/test.es
 MIN   := dist/decorators.min.js
 all: install clean build
+test:
+	jasmine
 clean:
 	rm -r dist
 install:

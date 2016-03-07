@@ -65,30 +65,54 @@ const _class = ((r) => a => Object.prototype.toString.call(a).match(r)[1])(/\s([
 //IE workaround for lack of Array.isArray
 const _isArray = a => _class(a) === 'Array' || (a instanceof Array);
 
-//typeGuard :: String -> (* -> *) -> (* -> *)
-//typeGuard :: (* -> Object) -> (* -> *) -> (* -> *)
-const typeGuard = curry((t, fn) => {
-  return function(...args) {
-    let arg = args[0], ctx = this === _global ? null : this, passed = false;
-    let first   = 'string' === typeof arg ? arg.toLowerCase() : arg;
-    let type    = 'string' === typeof t   ? t.toLowerCase()   : t;
-    let argType = typeof first;
-    switch (true) {
-      case (type === first):
-      case (type === argType && 'object' !== argType):
-      case ('function' === typeof type && first instanceof type):
-      case ('object' === argType && ('object' === type || Object === type)):
-      case ('object' === argType && first === null && type === 'null'):
-      case (_class(first).toLowerCase() === type):
-        passed = true;
-        break;
-    }
-    if (!passed) {
-      throw new TypeError(`In fn ${_getFnName(fn)} expected ${type}, got ${first}.`);
-    }
-    return fn.apply(ctx, args);
+//_getType :: * -> String
+const _getType = (t) => {
+  switch (true) {
+    case ('string' === typeof t):
+      return t;
+    case ('symbol' === typeof t):
+    case ('undefined' === typeof t):
+    case ('boolean' === typeof t):
+    case ('number' === typeof t):
+      return typeof t;
+    case ('function' === typeof t):
+      return _getFnName(t); //assume constructor
+    case ('object' === typeof t):
+      return null === t ? 'null' : (t.constructor.name || _class(t));
   }
-});
+};
+
+//typeGuard :: [String] -> (* -> *) -> (* -> *)
+const typeGuard = ((check) => {
+  return curry((ts, fn) => {
+    let arr = _isArray(ts) && ts.length ? ts : [ts];
+    let types = arr.map((t) => 'string' === typeof t ? t.toLowerCase() : t);
+    //keep all the args, but typecheck the first only, assume curried
+    return function(...args) {
+      let ctx = this === _global ? null : this;
+      let test = check(args[0]);
+      let passed = types.some(test);
+      if (!passed) {
+        let type = _getType(args[0]), expected = types.map(_getType).join(',');
+        throw new TypeError(`In fn ${_getFnName(fn)} expected one of ${expected}, got ${type}.`);
+      }
+      return fn.apply(ctx, args);
+    }
+  });
+})(curry((arg, type) => {
+  let passed = false, argType = typeof arg, t = typeof type;
+  switch (true) {
+    case (type === arg):
+    case (type === argType && 'object' !== argType):
+    case ('function' === t && arg instanceof type):
+    case ('object' === t && arg instanceof type.constructor):
+    case ('object' === t && _class(type) === _class(arg)):
+    case (_class(arg).toLowerCase() === type):
+      passed = true;
+      break;
+  }
+  return passed;
+}));
 
 //_fnFirst :: (* -> *) -> (* -> *)
 const _fnFirst = typeGuard('function');

@@ -117,36 +117,64 @@
     return _class(a) === 'Array' || a instanceof Array;
   };
 
-  //typeGuard :: String -> (* -> *) -> (* -> *)
-  //typeGuard :: (* -> Object) -> (* -> *) -> (* -> *)
-  var typeGuard = curry(function (t, fn) {
-    return function () {
-      for (var _len4 = arguments.length, args = Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
-        args[_key4] = arguments[_key4];
-      }
+  //_getType :: * -> String
+  var _getType = function _getType(t) {
+    switch (true) {
+      case 'string' === typeof t:
+        return t;
+      case 'symbol' === (typeof t === 'undefined' ? 'undefined' : _typeof(t)):
+      case 'undefined' === typeof t:
+      case 'boolean' === typeof t:
+      case 'number' === typeof t:
+        return typeof t === 'undefined' ? 'undefined' : _typeof(t);
+      case 'function' === typeof t:
+        return _getFnName(t); //assume constructor
+      case 'object' === (typeof t === 'undefined' ? 'undefined' : _typeof(t)):
+        return null === t ? 'null' : t.constructor.name || _class(t);
+    }
+  };
 
-      var arg = args[0],
-          ctx = this === _global ? null : this,
-          passed = false;
-      var first = 'string' === typeof arg ? arg.toLowerCase() : arg;
-      var type = 'string' === typeof t ? t.toLowerCase() : t;
-      var argType = typeof first === 'undefined' ? 'undefined' : _typeof(first);
-      switch (true) {
-        case type === first:
-        case type === argType && 'object' !== argType:
-        case 'function' === typeof type && first instanceof type:
-        case 'object' === argType && ('object' === type || Object === type):
-        case 'object' === argType && first === null && type === 'null':
-        case _class(first).toLowerCase() === type:
-          passed = true;
-          break;
-      }
-      if (!passed) {
-        throw new TypeError('In fn ' + _getFnName(fn) + ' expected ' + type + ', got ' + first + '.');
-      }
-      return fn.apply(ctx, args);
-    };
-  });
+  //typeGuard :: [String] -> (* -> *) -> (* -> *)
+  var typeGuard = function (check) {
+    return curry(function (ts, fn) {
+      var arr = _isArray(ts) && ts.length ? ts : [ts];
+      var types = arr.map(function (t) {
+        return 'string' === typeof t ? t.toLowerCase() : t;
+      });
+      //keep all the args, but typecheck the first only, assume curried
+      return function () {
+        var ctx = this === _global ? null : this;
+
+        for (var _len4 = arguments.length, args = Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
+          args[_key4] = arguments[_key4];
+        }
+
+        var test = check(args[0]);
+        var passed = types.some(test);
+        if (!passed) {
+          var type = _getType(args[0]),
+              expected = types.map(_getType).join(',');
+          throw new TypeError('In fn ' + _getFnName(fn) + ' expected one of ' + expected + ', got ' + type + '.');
+        }
+        return fn.apply(ctx, args);
+      };
+    });
+  }(curry(function (arg, type) {
+    var passed = false,
+        argType = typeof arg === 'undefined' ? 'undefined' : _typeof(arg),
+        t = typeof type === 'undefined' ? 'undefined' : _typeof(type);
+    switch (true) {
+      case type === arg:
+      case type === argType && 'object' !== argType:
+      case 'function' === t && arg instanceof type:
+      case 'object' === t && arg instanceof type.constructor:
+      case 'object' === t && _class(type) === _class(arg):
+      case _class(arg).toLowerCase() === type:
+        passed = true;
+        break;
+    }
+    return passed;
+  }));
 
   //_fnFirst :: (* -> *) -> (* -> *)
   var _fnFirst = typeGuard('function');

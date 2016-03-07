@@ -1,19 +1,19 @@
 (function (global, factory) {
   if (typeof define === "function" && define.amd) {
-    define(['./decorators.js'], factory);
+    define(['./decorators.min.js'], factory);
   } else if (typeof exports !== "undefined") {
-    factory(require('./decorators.js'));
+    factory(require('./decorators.min.js'));
   } else {
     var mod = {
       exports: {}
     };
-    factory(global.decorators);
+    factory(global.decoratorsMin);
     global.test = mod.exports;
   }
-})(this, function (_decorators) {
+})(this, function (_decoratorsMin) {
   'use strict';
 
-  var d = _interopRequireWildcard(_decorators);
+  var d = _interopRequireWildcard(_decoratorsMin);
 
   function _interopRequireWildcard(obj) {
     if (obj && obj.__esModule) {
@@ -198,47 +198,62 @@
     });
 
     it('should work for instances of constructors custom and builtin ctor/literals', function () {
+
+      //internal class
       var array = d.typeGuard('Array', identity);
       var regexp = d.typeGuard('regexp', identity); //testing case-insensitivity
       var date = d.typeGuard('Date', identity);
       var error = d.typeGuard('Error', identity);
-      var newArray = d.typeGuard(Array, identity);
-      var newRegexp = d.typeGuard(RegExp, identity);
-      var newDate = d.typeGuard(Date, identity);
+
+      //instanceof
+      var fnArray = d.typeGuard(Array, identity);
+      var fnRegExp = d.typeGuard(RegExp, identity);
+      var fnDate = d.typeGuard(Date, identity);
       var foo = new Foo();
       var isFoo = d.typeGuard(Foo, identity);
       var reg = /arstast/gmi;
       var arr = [];
       var now = new Date();
       var barr = new Bar();
+
+      //duck-types
+      var otherFoo = d.typeGuard(new Bar(), identity);
+      var otherArr = d.typeGuard([], identity);
+
       expect(array(arr)).toBe(arr);
       expect(function () {
         return array({});
       }).toThrowError(TypeError);
-      expect(newArray(arr)).toBe(arr);
+      expect(fnArray(arr)).toBe(arr);
       expect(function () {
-        return newArray({});
+        return fnArray({});
       }).toThrowError(TypeError);
       expect(regexp(reg)).toBe(reg);
       expect(function () {
         return regexp({});
       }).toThrowError(TypeError);
-      expect(newRegexp(reg)).toBe(reg);
+      expect(fnRegExp(reg)).toBe(reg);
       expect(function () {
-        return newRegexp({});
+        return fnRegExp({});
       }).toThrowError(TypeError);
       expect(date(now)).toBe(now);
       expect(function () {
         return date({});
       }).toThrowError(TypeError);
-      expect(newDate(now)).toBe(now);
+      expect(fnDate(now)).toBe(now);
       expect(function () {
-        return newDate({});
+        return fnDate({});
       }).toThrowError(TypeError);
       expect(isFoo(foo)).toBe(foo);
       expect(isFoo(barr)).toBe(barr);
       expect(function () {
         return isFoo({});
+      }).toThrowError(TypeError);
+      // expect(otherFoo(barr)).toBe(barr);
+      // expect(() => otherFoo({})).toThrowError(TypeError);
+      expect(otherArr(arr)).toBe(arr);
+      expect(function () {
+        return otherArr({});
       }).toThrowError(TypeError);
     });
 
@@ -273,6 +288,22 @@
       expect(o.fn(1, 2)).toBe(6);
       expect(function () {
         return o.fn(null, 2);
+      }).toThrowError(TypeError);
+    });
+
+    it('should handle polymorphic functions', function () {
+      var poly = d.typeGuard(['string', Date], function (a) {
+        switch (true) {
+          case 'string' === typeof a:
+            return 3;
+          case a instanceof Date:
+            return 5;
+        }
+      });
+      expect(poly('a')).toBe(3);
+      expect(poly(new Date())).toBe(5);
+      expect(function () {
+        return poly(42);
       }).toThrowError(TypeError);
     });
   });

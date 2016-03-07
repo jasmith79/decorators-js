@@ -48,7 +48,13 @@ have to explicitly bind the context before handing it to the decorator.
   Similar to [Ramda's](http://ramdajs.com/0.18.0/index.html) `Construct`, `unNew` takes a
   Javascript constructor function and wraps it so that it functions properly when called without
   the `new` operator. Useful for (among other things) mapping a constructor over a list of
-  configuration objects.
+  configuration objects. NOTE: be careful when using with constructors that take optional
+  parameters, especially built-ins. Date for instance has an arity of 7, but can be called with
+  no arguments at all. Because the return function is curried, use in the following fashion:
+
+  `let makeDate = decorators.unNew(0, Date);`
+
+  Unless you want the currying.
 
 ###unGather
   `unGather :: ([[a]] -> a) -> ([a] -> a)`
@@ -91,6 +97,13 @@ have to explicitly bind the context before handing it to the decorator.
   `curry Int -> ([a] -> a) -> ([a] -> a)`
 
   Implemented it because I needed it internally and I've exposed it purely for convenience: I
-  recommend using [Ramda's](http://ramdajs.com/0.18.0/index.html) or at least
+  recommend using [Ramda's](http://ramdajs.com/0.19.0/index.html) or at least
   [lodash's](https://lodash.com/) `curry`. Curries the function either to the specified arity
   or the function's length property.
+
+###typeGuard
+  `typeGuard :: [String] -> (* -> *) -> (* -> *)`
+
+  Takes a list of types to check against the first argument of the decorated function. Can test
+  constructors, primitives, string types (e.g. 'function', 'boolean'), and will duct-type objects
+  based on either their constructors name or their internal class property.
