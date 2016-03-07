@@ -35,11 +35,6 @@ have to explicitly bind the context before handing it to the decorator.
 
   Logs the name, arguments, and result to the console each time the passed-in function is called.
 
-###workerify
-  `workerify :: (a -> a) -> (a -> Promise a)`
-
-  Runs the passed-in function in a Web Worker. Returns a Promise of the result.
-
 ###denodeify
   `denodeify :: (* -> a) -> (* -> Promise a)`
 
@@ -83,18 +78,8 @@ have to explicitly bind the context before handing it to the decorator.
   Note that this function is **not** `debounced`/`throttled` by default, you will need to do so
   yourself.
 
-###checkJSON
-  `checkJSON :: (* -> String) -> (* -> {k:v})`
-  `checkJSON :: (* -> String) -> (* -> null)`
-
-  Takes a function that returns a JSON string and attempts to verify that the string is valid before
-  parsing. If the passed-in function returns a non-string, an error is thrown. If the function
-  returns a string with length < 3 (i.e., empty response) or a string whose first character is not
-  a valid first character for JSON returns `null`. Otherwise, attempts to parse the string and
-  returns that value.
-
-###runTime
-  `runTime :: (* -> a) -> (* -> a)`
+###runtime
+  `runtime :: (* -> a) -> (* -> a)`
 
   Logs the passed-in function's name, arguments, result, and run time in milliseconds. **NOTE**
   there is some extra overhead in the nested function calls. If a great deal of precision in
@@ -107,4 +92,5 @@ have to explicitly bind the context before handing it to the decorator.
 
   Implemented it because I needed it internally and I've exposed it purely for convenience: I
   recommend using [Ramda's](http://ramdajs.com/0.18.0/index.html) or at least
-  [lodash's](https://lodash.com/) `curry`.
+  [lodash's](https://lodash.com/) `curry`. Curries the function either to the specified arity
+  or the function's length property.

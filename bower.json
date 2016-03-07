@@ -1,16 +1,18 @@
 {
   "name": "decorators-js",
-  "homepage": "https://github.com/jasmith79/decorators-js",
+  "description": "Common javascript decorators",
+  "main": "dist/decorators.js",
   "authors": [
-    "jsmith <jasmith79@gmail.com>"
-  ],
-  "description": "Common JS Decorators",
-  "main": "decorators.js",
-  "moduleType": [],
-  "keywords": [
-    "Decorators"
+    "jasmith79@gmail.com"
   ],
   "license": "MIT",
+  "keywords": [
+    "es2015",
+    "es6",
+    "decorators"
+  ],
+  "homepage": "https://github.com/jasmith79/decorators-js",
+  "moduleType": [],
   "ignore": [
     "**/.*",
     "node_modules",
