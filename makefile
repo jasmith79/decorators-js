@@ -4,12 +4,15 @@ APP   := dist/decorators.js
 TESTS := dist/test.js
 SRC   := src/decorators.es
 TES   := spec/test.es
+MIN   := dist/decorators.min.js
 all: install clean build
 clean:
 	rm -r dist
 install:
 	@npm install
-build: $(APP) $(TESTS)
+build: $(MIN) $(TESTS)
+$(MIN): $(APP)
+	uglifyjs -cmo $@ $<
 $(APP): $(SRC)
 	@mkdir -p $(@D)
 	babel $< -o $@
