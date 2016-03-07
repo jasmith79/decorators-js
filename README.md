@@ -105,5 +105,5 @@ have to explicitly bind the context before handing it to the decorator.
   `typeGuard :: [String] -> (* -> *) -> (* -> *)`
 
   Takes a list of types to check against the first argument of the decorated function. Can test
-  constructors, primitives, string types (e.g. 'function', 'boolean'), and will duct-type objects
+  constructors, primitives, string types (e.g. 'function', 'boolean'), and will duck-type objects
   based on either their constructors name or their internal class property.
