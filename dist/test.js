@@ -249,8 +249,10 @@
       expect(function () {
         return isFoo({});
       }).toThrowError(TypeError);
-      // expect(otherFoo(barr)).toBe(barr);
-      // expect(() => otherFoo({})).toThrowError(TypeError);
+      expect(otherFoo(barr)).toBe(barr);
+      expect(function () {
+        return otherFoo({});
+      }).toThrowError(TypeError);
       expect(otherArr(arr)).toBe(arr);
       expect(function () {
         return otherArr({});

@@ -106,8 +106,8 @@ describe('typeGuard', function() {
     expect(isFoo(foo)).toBe(foo);
     expect(isFoo(barr)).toBe(barr);
     expect((() => isFoo({}))).toThrowError(TypeError);
-    // expect(otherFoo(barr)).toBe(barr);
-    // expect(() => otherFoo({})).toThrowError(TypeError);
+    expect(otherFoo(barr)).toBe(barr);
+    expect(() => otherFoo({})).toThrowError(TypeError);
     expect(otherArr(arr)).toBe(arr);
     expect(() => otherArr({})).toThrowError(TypeError);
   });

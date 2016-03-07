@@ -100,13 +100,13 @@ const typeGuard = ((check) => {
     }
   });
 })(curry((arg, type) => {
-  let passed = false, argType = typeof arg, t = typeof type;
+  let passed = false, argType = typeof arg, t = typeof type, clazz = _class(arg);
   switch (true) {
     case (type === arg):
     case (type === argType && 'object' !== argType):
     case ('function' === t && arg instanceof type):
     case ('object' === t && arg instanceof type.constructor):
-    case ('object' === t && _class(type) === _class(arg)):
+    case ('object' === t && clazz !== 'Object' && _class(type) === clazz): //null et al
     case (_class(arg).toLowerCase() === type):
       passed = true;
       break;

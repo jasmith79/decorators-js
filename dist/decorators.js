@@ -162,13 +162,14 @@
   }(curry(function (arg, type) {
     var passed = false,
         argType = typeof arg === 'undefined' ? 'undefined' : _typeof(arg),
-        t = typeof type === 'undefined' ? 'undefined' : _typeof(type);
+        t = typeof type === 'undefined' ? 'undefined' : _typeof(type),
+        clazz = _class(arg);
     switch (true) {
       case type === arg:
       case type === argType && 'object' !== argType:
       case 'function' === t && arg instanceof type:
       case 'object' === t && arg instanceof type.constructor:
-      case 'object' === t && _class(type) === _class(arg):
+      case 'object' === t && clazz !== 'Object' && _class(type) === clazz: //null et al
       case _class(arg).toLowerCase() === type:
         passed = true;
         break;
