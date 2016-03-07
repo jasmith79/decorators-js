@@ -406,26 +406,32 @@
     });
   });
 
-  // describe('debounce', function() {
-  //   it('should drop calls repeated in the waiting period', function(done) {
-  //     let halfsec = d.debounce(500), counter = 0, f = halfsec(() => counter += 1);
-  //     let o = {
-  //       num: 0,
-  //       fn: d.debounce(500, function(){ this.num += 1; })
-  //     };
-  //     f();
-  //     f();
-  //     f();
-  //     o.fn();
-  //     o.fn();
-  //     o.fn();
-  //     setTimeout(() => {
-  //       expect(counter).toBe(1);
-  //       expect(o.num).toBe(1);
-  //       done();
-  //     });
-  //   });
-  // });
+  describe('debounce', function () {
+    it('should drop calls repeated in the waiting period', function (done) {
+      var halfsec = d.debounce(500),
+          counter = 0,
+          f = halfsec(function () {
+        return counter += 1;
+      });
+      var o = {
+        num: 0,
+        fn: d.debounce(500, function () {
+          this.num += 1;
+        })
+      };
+      f();
+      f();
+      f();
+      o.fn();
+      o.fn();
+      o.fn();
+      setTimeout(function () {
+        expect(counter).toBe(1);
+        expect(o.num).toBe(1);
+        done();
+      }, 1000);
+    });
+  });
 
   describe('denodeify', function () {
     it('should turn a callback-accepting function into a promise returning one', function (done) {
