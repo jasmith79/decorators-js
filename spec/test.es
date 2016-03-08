@@ -13,7 +13,7 @@ import * as d from './decorators.min.js';
 let sum      = function(a,b,c) { return a + b + c; };
 let noop     = function(){};
 let identity = x => x;
-let makeDate = d.unNew(Date);
+let makeDate = d.unNew(0, Date);
 let fortytwo = () => 42;
 class Foo {};
 class Bar extends Foo {};
@@ -302,6 +302,8 @@ describe('trampoline', function() {
 describe('unNew', function() {
   let args = [2015, 0, 1, 12, 0, 0, 0];
   let jan1 = makeDate(...args);
+  let now  = makeDate();
+  let also = new Date();
 
   it('should allow a constructor function to be curried/applied/called', function() {
     expect(jan1.getFullYear()).toBe(2015);
@@ -310,6 +312,7 @@ describe('unNew', function() {
     expect(jan1.getHours()).toBe(12);
     expect(jan1.getMinutes()).toBe(0);
     expect(jan1.getSeconds()).toBe(0);
+    expect(Math.abs(also.getTime() - now.getTime())).toBeLessThan(500);
   });
 
   it('should not break instanceof', function() {
@@ -320,6 +323,34 @@ describe('unNew', function() {
   });
 });
 
+describe('lift', function() {
+  it('should wrap the return value in the passed in constructor', function() {
+    let liftD = d.lift((...args) => {
+      return makeDate(...args)
+    });
+    let now = new Date();
+    let later = liftD(() => {})();
+    let t1 = now.getTime();
+    let t2 = later.getTime();
+    if (Number.isNaN(t2)) {
+      throw new Error(`${later.toString()} is not a valid date`);
+    }
+    expect(later instanceof Date).toBe(true);
+    expect(Math.abs(t2 - t1)).toBeLessThan(500);
+    let also = liftD(() => {
+      return [
+        later.getFullYear(),
+        later.getMonth(),
+        later.getDate(),
+        later.getHours(),
+        later.getMinutes(),
+        later.getSeconds()
+      ]
+    })();
+    expect(Math.abs(also.getTime() - later.getTime())).toBeLessThan(1000);
+  })
+})
+
 describe('liftP', function() {
   it('should turn a function into a promise-returning fn', function(done) {
     let p = d.liftP(fortytwo)();
@@ -329,6 +360,20 @@ describe('liftP', function() {
     });
   });
 });
+
+describe('liftA', function() {
+  let arr = d.liftA(fortytwo)();
+  it('should turn a function into a array-returning fn', function() {
+    expect(arr.length).toBe(1);
+    expect(arr[0]).toBe(42);
+  });
+
+  it('should auto-flatten', function() {
+    let returnsArray = () => [3];
+    let val = d.liftA(returnsArray)();
+    expect(val[0]).toBe(3);
+  });
+})
 
 describe('bindP', function() {
   it('should turn a -> a into Promise a -> Promise a', function(done) {
@@ -358,5 +403,34 @@ describe('loopP', function() {
       });
       done();
     }, 500);
+  });
+
+  // it('should be capable of recursion', function(done) {
+  //   let counter = 0
+  //   let padd = d.liftP((n) => {
+  //     counter += 1;
+  //     return n * counter;
+  //   });
+  //   let fin = d.loopP(padd, 2);
+  //   setTimeout(() => {
+  //     fin().then((v) => {
+  //       expect(v).toBe(counter * 2);
+  //       done();
+  //     });
+  //   }, 10);
+  // });
+});
+
+describe('timeoutP', function() {
+  it('should reject a promise that takes too long to resolve', function(done) {
+    let timeout = 100, fn = d.liftP(() => 3);
+    let fail = () => new Promise((res, rej) => {
+      setTimeout(() => res(3), 200);
+    });
+    let tre = d.timeoutP(timeout, fn)();
+    let uhoh = d.timeoutP(timeout, fail)();
+    tre.then((v) => expect(v).toBe(3));
+    uhoh.catch((e) => expect(e instanceof Error).toBe(true));
+    Promise.all([tre, uhoh]).then(() => done()).catch(() => done());
   });
 });

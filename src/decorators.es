@@ -16,7 +16,7 @@ const _global = (() => {
 /*   Functions   */
 
 //curry ([a] -> a) -> ([a] -> a)
-//curry Integer -> ([a] -> a) -> ([a] -> a)
+//curry Number -> ([a] -> a) -> ([a] -> a)
 //inspired by Nick Fitzgerald's implementation for wu.js
 const curry = ((c) => {
   let _curry = function(n, f) {
@@ -139,7 +139,7 @@ const maybe = _fnFirst((fn) => {
 //_trim :: String -> String
 const _trim = maybe(typeGuard('string', (str) => str.trim()));
 
-//debounce :: Integer -> (* -> Null) -> Integer
+//debounce :: Number -> (* -> Null) -> Number
 //Delay in milliseconds. Returns the timer ID so caller can cancel
 const debounce = curry((delay, fn) => {
   if ('function' !== typeof fn) {
@@ -153,7 +153,7 @@ const debounce = curry((delay, fn) => {
   });
 });
 
-//throttle :: Integer -> (* -> Null) -> Integer
+//throttle :: Number -> (* -> Null) -> Number
 //Delay in milliseconds. Returns the timer ID so caller can cancel
 const throttle = curry((delay, fn) => {
   if ('function' !== typeof fn) {
@@ -240,7 +240,7 @@ const denodeify = _fnFirst((fn) => {
   });
 });
 
-//unNew :: (* -> {k:v}) -> (* -> {k:v})
+//unNew :: (* -> a) -> (* -> a)
 //Wraps a constructor so that it may be not only called without new but used with .apply(). Note
 //unlike ramda's `construct` the unNewed constructor is variadic.
 const unNew = ((construct) => {
@@ -289,12 +289,29 @@ const trampoline = _fnFirst((fn) => {
   });
 });
 
-//liftP :: (* -> *) -> (* -> Promise *)
-const liftP = _fnFirst((fn) => {
+//lift :: (* -> a) -> (* -> *) -> (* -> a)
+//takes a type constructor for type a and wraps the return value of the passed-in function in type
+//a. Type constructors should be guarded, for an example see liftP and liftA below. Note that if the
+//function returns an *array* then array will be applied to the constructor, i.e. constructors
+//requiring `new` should be wrapped in unNew.
+const lift = curry((constructor, fn) => {
   return curry(fn.length, function(...args) {
-    return Promise.resolve(fn.apply(this, args));
+    let result = fn.apply(this, args);
+    switch (false) {
+      case (!_isArray(result)):             return constructor(...result);
+      case ('undefined' !== typeof result): return constructor();
+      default:                              return constructor(result);
+    }
   });
 });
+
+//liftP :: (* -> *) -> (* -> Promise *)
+//I do this often enough for Promises that I baked it in.
+const liftP = lift((...args) => Promise.resolve(args.length > 1 ? args : args[0]));
+
+//liftA :: (* -> *) -> (* -> [*])
+//ditto arrays
+const liftA = lift(unGather((...args) => args));
 
 //bindP :: (* -> Promise *) -> (Promise * -> Promise *)
 const bindP = _fnFirst((fn) => {
@@ -303,18 +320,17 @@ const bindP = _fnFirst((fn) => {
   });
 });
 
-//loopP :: (Null -> *) -> (Null -> Promise *)
+//loopP :: (* -> *) -> (Null -> Promise *)
 //Starts a loop that continually calls the promise-returning function each time the previous
-//iteration resolves. These calls should primarily be concerned with side-effects like updating
-//the DOM. Useful for long-polling. Returns a function that when called breaks the loop and returns
-//a Promise of last value.
+//iteration resolves with the value of that resolution. Useful for long-polling. Returns a function
+//that when called breaks the loop and returns a Promise of last value.
 const loopP = ((err) => {
-  return _fnFirst(function(fn) {
-    let done = false, promise = fn();
+  return _fnFirst(function(fn, ...args) {
+    let done = false, promise = fn(...args);
     if ('function' !== typeof promise.then) {
       throw err;
     }
-    let update = () => promise = fn().then((v) => {
+    let update = (val) => promise = fn(val).then((v) => {
       if (!done) {
         enqueue();
       }
@@ -322,7 +338,7 @@ const loopP = ((err) => {
     });
     let enqueue = () => promise.then((v) => {
       if (!done) {
-        update();
+        update(v);
       }
       return v;
     });
@@ -334,9 +350,26 @@ const loopP = ((err) => {
   });
 })(new TypeError('Callback function must return a Promise'));
 
-// const timeoutP = typeGuard('number', curry(2, function(timeout, fn) {
-//
-// }));
+//timeoutP :: Number -> (* -> Promise *) -> (* -> Promise *)
+//Rejects if the promise takes longer than the given delay to resolve.
+//Timeout in milliseconds.
+const timeoutP = typeGuard('number', curry(2, function(timeout, fn) {
+  return curry(fn.length, function(...args) {
+    let promise = fn.apply(this, args);
+    let resolved = false;
+    promise.then(() => resolved = true);
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        if (resolved) {
+          resolve(promise);
+        } else {
+          reject(new Error(`Promise from function ${_getFnName(fn)}
+            failed to resolve in ${timeout/1000} seconds.`));
+        }
+      }, timeout);
+    });
+  });
+}));
 
 export {
   curry,
@@ -351,7 +384,10 @@ export {
   unNew,
   runtime,
   trampoline,
+  lift,
   liftP,
+  liftA,
   bindP,
   loopP,
+  timeoutP,
 };

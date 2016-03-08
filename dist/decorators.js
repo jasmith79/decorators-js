@@ -17,6 +17,18 @@
     value: true
   });
 
+  function _toConsumableArray(arr) {
+    if (Array.isArray(arr)) {
+      for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) {
+        arr2[i] = arr[i];
+      }
+
+      return arr2;
+    } else {
+      return Array.from(arr);
+    }
+  }
+
   var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
     return typeof obj;
   } : function (obj) {
@@ -41,7 +53,7 @@
   /*   Functions   */
 
   //curry ([a] -> a) -> ([a] -> a)
-  //curry Integer -> ([a] -> a) -> ([a] -> a)
+  //curry Number -> ([a] -> a) -> ([a] -> a)
   //inspired by Nick Fitzgerald's implementation for wu.js
   var curry = function (c) {
     var _curry = function _curry(n, f) {
@@ -178,33 +190,20 @@
   //_fnFirst :: (* -> *) -> (* -> *)
   var _fnFirst = typeGuard('function');
 
-  //_noGlobalCtx :: (* -> a) -> (* -> a)
-  //Ensures passed-in function is not executed with global context set to `this`. Returned function
-  //is automatically curried.
-  var _noGlobalCtx = _fnFirst(function (fn) {
-    return curry(fn.length, function () {
-      for (var _len5 = arguments.length, args = Array(_len5), _key5 = 0; _key5 < _len5; _key5++) {
-        args[_key5] = arguments[_key5];
-      }
-
-      return fn.apply(ctx, args);
-    });
-  });
-
   //unGather :: (* -> *) -> (* -> *)
   //Conditionally unnests the arguments to a function, useful for functions that use rest params to
   //gather args.
   var unGather = _fnFirst(function () {
-    for (var _len6 = arguments.length, args = Array(_len6), _key6 = 0; _key6 < _len6; _key6++) {
-      args[_key6] = arguments[_key6];
+    for (var _len5 = arguments.length, args = Array(_len5), _key5 = 0; _key5 < _len5; _key5++) {
+      args[_key5] = arguments[_key5];
     }
 
     var fn = args[0];
     var initArgs = args.slice(1);
 
     var f = curry(fn.length, function () {
-      for (var _len7 = arguments.length, fnArgs = Array(_len7), _key7 = 0; _key7 < _len7; _key7++) {
-        fnArgs[_key7] = arguments[_key7];
+      for (var _len6 = arguments.length, fnArgs = Array(_len6), _key6 = 0; _key6 < _len6; _key6++) {
+        fnArgs[_key6] = arguments[_key6];
       }
 
       var arr = fnArgs[0],
@@ -218,8 +217,8 @@
   //maybe :: (* -> *) -> (Null -> Null)
   var maybe = _fnFirst(function (fn) {
     return curry(fn.length, function () {
-      for (var _len8 = arguments.length, args = Array(_len8), _key8 = 0; _key8 < _len8; _key8++) {
-        args[_key8] = arguments[_key8];
+      for (var _len7 = arguments.length, args = Array(_len7), _key7 = 0; _key7 < _len7; _key7++) {
+        args[_key7] = arguments[_key7];
       }
 
       return args.every(function (x) {
@@ -233,7 +232,7 @@
     return str.trim();
   }));
 
-  //debounce :: Integer -> (* -> Null) -> Integer
+  //debounce :: Number -> (* -> Null) -> Number
   //Delay in milliseconds. Returns the timer ID so caller can cancel
   var debounce = curry(function (delay, fn) {
     if ('function' !== typeof fn) {
@@ -243,8 +242,8 @@
     return curry(fn.length, function () {
       var _this = this;
 
-      for (var _len9 = arguments.length, args = Array(_len9), _key9 = 0; _key9 < _len9; _key9++) {
-        args[_key9] = arguments[_key9];
+      for (var _len8 = arguments.length, args = Array(_len8), _key8 = 0; _key8 < _len8; _key8++) {
+        args[_key8] = arguments[_key8];
       }
 
       clearTimeout(timer);
@@ -255,7 +254,7 @@
     });
   });
 
-  //throttle :: Integer -> (* -> Null) -> Integer
+  //throttle :: Number -> (* -> Null) -> Number
   //Delay in milliseconds. Returns the timer ID so caller can cancel
   var throttle = curry(function (delay, fn) {
     if ('function' !== typeof fn) {
@@ -266,8 +265,8 @@
     return curry(fn.length, function () {
       var _this2 = this;
 
-      for (var _len10 = arguments.length, args = Array(_len10), _key10 = 0; _key10 < _len10; _key10++) {
-        args[_key10] = arguments[_key10];
+      for (var _len9 = arguments.length, args = Array(_len9), _key9 = 0; _key9 < _len9; _key9++) {
+        args[_key9] = arguments[_key9];
       }
 
       var now = Date.now();
@@ -287,8 +286,8 @@
   //log :: (* -> *) -> [*] -> *
   var log = _fnFirst(function (fn) {
     return curry(fn.length, function () {
-      for (var _len11 = arguments.length, args = Array(_len11), _key11 = 0; _key11 < _len11; _key11++) {
-        args[_key11] = arguments[_key11];
+      for (var _len10 = arguments.length, args = Array(_len10), _key10 = 0; _key10 < _len10; _key10++) {
+        args[_key10] = arguments[_key10];
       }
 
       var res = fn.apply(this, args);
@@ -338,14 +337,14 @@
     return curry(length, function () {
       var _this3 = this;
 
-      for (var _len12 = arguments.length, args = Array(_len12), _key12 = 0; _key12 < _len12; _key12++) {
-        args[_key12] = arguments[_key12];
+      for (var _len11 = arguments.length, args = Array(_len11), _key11 = 0; _key11 < _len11; _key11++) {
+        args[_key11] = arguments[_key11];
       }
 
       return new Promise(function (resolve, reject) {
         fn.apply(_this3, [].concat(args, [function (err) {
-          for (var _len13 = arguments.length, rest = Array(_len13 > 1 ? _len13 - 1 : 0), _key13 = 1; _key13 < _len13; _key13++) {
-            rest[_key13 - 1] = arguments[_key13];
+          for (var _len12 = arguments.length, rest = Array(_len12 > 1 ? _len12 - 1 : 0), _key12 = 1; _key12 < _len12; _key12++) {
+            rest[_key12 - 1] = arguments[_key12];
           }
 
           if (err) {
@@ -369,7 +368,7 @@
     });
   });
 
-  //unNew :: (* -> {k:v}) -> (* -> {k:v})
+  //unNew :: (* -> a) -> (* -> a)
   //Wraps a constructor so that it may be not only called without new but used with .apply(). Note
   //unlike ramda's `construct` the unNewed constructor is variadic.
   var unNew = function (construct) {
@@ -388,8 +387,8 @@
           break;
       }
       return curry(length, function () {
-        for (var _len14 = arguments.length, args = Array(_len14), _key14 = 0; _key14 < _len14; _key14++) {
-          args[_key14] = arguments[_key14];
+        for (var _len13 = arguments.length, args = Array(_len13), _key13 = 0; _key13 < _len13; _key13++) {
+          args[_key13] = arguments[_key13];
         }
 
         return construct.apply(undefined, [ctor].concat(args));
@@ -397,8 +396,8 @@
     };
     return fn;
   }(function () {
-    for (var _len15 = arguments.length, args = Array(_len15), _key15 = 0; _key15 < _len15; _key15++) {
-      args[_key15] = arguments[_key15];
+    for (var _len14 = arguments.length, args = Array(_len14), _key14 = 0; _key14 < _len14; _key14++) {
+      args[_key14] = arguments[_key14];
     }
 
     var ctor = args[0];
@@ -413,8 +412,8 @@
     return curry(f.length, function () {
       console.time(name);
 
-      for (var _len16 = arguments.length, args = Array(_len16), _key16 = 0; _key16 < _len16; _key16++) {
-        args[_key16] = arguments[_key16];
+      for (var _len15 = arguments.length, args = Array(_len15), _key15 = 0; _key15 < _len15; _key15++) {
+        args[_key15] = arguments[_key15];
       }
 
       var result = fn.apply(this, args);
@@ -426,8 +425,8 @@
   //trampoline :: (* -> *) -> (* -> *)
   var trampoline = _fnFirst(function (fn) {
     return curry(fn.length, function () {
-      for (var _len17 = arguments.length, args = Array(_len17), _key17 = 0; _key17 < _len17; _key17++) {
-        args[_key17] = arguments[_key17];
+      for (var _len16 = arguments.length, args = Array(_len16), _key16 = 0; _key16 < _len16; _key16++) {
+        args[_key16] = arguments[_key16];
       }
 
       var result = fn.apply(this, args);
@@ -438,16 +437,48 @@
     });
   });
 
-  //liftP :: (* -> *) -> (* -> Promise *)
-  var liftP = _fnFirst(function (fn) {
+  //lift :: (* -> a) -> (* -> *) -> (* -> a)
+  //takes a type constructor for type a and wraps the return value of the passed-in function in type
+  //a. Type constructors should be guarded, for an example see liftP and liftA below. Note that if the
+  //function returns an *array* then array will be applied to the constructor, i.e. constructors
+  //requiring `new` should be wrapped in unNew.
+  var lift = curry(function (constructor, fn) {
     return curry(fn.length, function () {
-      for (var _len18 = arguments.length, args = Array(_len18), _key18 = 0; _key18 < _len18; _key18++) {
-        args[_key18] = arguments[_key18];
+      for (var _len17 = arguments.length, args = Array(_len17), _key17 = 0; _key17 < _len17; _key17++) {
+        args[_key17] = arguments[_key17];
       }
 
-      return Promise.resolve(fn.apply(this, args));
+      var result = fn.apply(this, args);
+      switch (false) {
+        case !_isArray(result):
+          return constructor.apply(undefined, _toConsumableArray(result));
+        case 'undefined' !== typeof result:
+          return constructor();
+        default:
+          return constructor(result);
+      }
     });
   });
+
+  //liftP :: (* -> *) -> (* -> Promise *)
+  //I do this often enough for Promises that I baked it in.
+  var liftP = lift(function () {
+    for (var _len18 = arguments.length, args = Array(_len18), _key18 = 0; _key18 < _len18; _key18++) {
+      args[_key18] = arguments[_key18];
+    }
+
+    return Promise.resolve(args.length > 1 ? args : args[0]);
+  });
+
+  //liftA :: (* -> *) -> (* -> [*])
+  //ditto arrays
+  var liftA = lift(unGather(function () {
+    for (var _len19 = arguments.length, args = Array(_len19), _key19 = 0; _key19 < _len19; _key19++) {
+      args[_key19] = arguments[_key19];
+    }
+
+    return args;
+  }));
 
   //bindP :: (* -> Promise *) -> (Promise * -> Promise *)
   var bindP = _fnFirst(function (fn) {
@@ -460,20 +491,23 @@
     });
   });
 
-  //loopP :: (Null -> *) -> (Null -> Promise *)
+  //loopP :: (* -> *) -> (Null -> Promise *)
   //Starts a loop that continually calls the promise-returning function each time the previous
-  //iteration resolves. These calls should primarily be concerned with side-effects like updating
-  //the DOM. Useful for long-polling. Returns a function that when called breaks the loop and returns
-  //a Promise of last value.
+  //iteration resolves with the value of that resolution. Useful for long-polling. Returns a function
+  //that when called breaks the loop and returns a Promise of last value.
   var loopP = function (err) {
     return _fnFirst(function (fn) {
+      for (var _len20 = arguments.length, args = Array(_len20 > 1 ? _len20 - 1 : 0), _key20 = 1; _key20 < _len20; _key20++) {
+        args[_key20 - 1] = arguments[_key20];
+      }
+
       var done = false,
-          promise = fn();
+          promise = fn.apply(undefined, args);
       if ('function' !== typeof promise.then) {
         throw err;
       }
-      var update = function update() {
-        return promise = fn().then(function (v) {
+      var update = function update(val) {
+        return promise = fn(val).then(function (v) {
           if (!done) {
             enqueue();
           }
@@ -483,7 +517,7 @@
       var enqueue = function enqueue() {
         return promise.then(function (v) {
           if (!done) {
-            update();
+            update(v);
           }
           return v;
         });
@@ -496,9 +530,31 @@
     });
   }(new TypeError('Callback function must return a Promise'));
 
-  // const timeoutP = typeGuard('number', curry(2, function(timeout, fn) {
-  //
-  // }));
+  //timeoutP :: Number -> (* -> Promise *) -> (* -> Promise *)
+  //Rejects if the promise takes longer than the given delay to resolve.
+  //Timeout in milliseconds.
+  var timeoutP = typeGuard('number', curry(2, function (timeout, fn) {
+    return curry(fn.length, function () {
+      for (var _len21 = arguments.length, args = Array(_len21), _key21 = 0; _key21 < _len21; _key21++) {
+        args[_key21] = arguments[_key21];
+      }
+
+      var promise = fn.apply(this, args);
+      var resolved = false;
+      promise.then(function () {
+        return resolved = true;
+      });
+      return new Promise(function (resolve, reject) {
+        setTimeout(function () {
+          if (resolved) {
+            resolve(promise);
+          } else {
+            reject(new Error('Promise from function ' + _getFnName(fn) + '\n            failed to resolve in ' + timeout / 1000 + ' seconds.'));
+          }
+        }, timeout);
+      });
+    });
+  }));
 
   exports.curry = curry;
   exports.typeGuard = typeGuard;
@@ -512,7 +568,10 @@
   exports.unNew = unNew;
   exports.runtime = runtime;
   exports.trampoline = trampoline;
+  exports.lift = lift;
   exports.liftP = liftP;
+  exports.liftA = liftA;
   exports.bindP = bindP;
   exports.loopP = loopP;
+  exports.timeoutP = timeoutP;
 });

@@ -108,7 +108,7 @@
   var identity = function identity(x) {
     return x;
   };
-  var makeDate = d.unNew(Date);
+  var makeDate = d.unNew(0, Date);
   var fortytwo = function fortytwo() {
     return 42;
   };
@@ -504,6 +504,8 @@
   describe('unNew', function () {
     var args = [2015, 0, 1, 12, 0, 0, 0];
     var jan1 = makeDate.apply(undefined, args);
+    var now = makeDate();
+    var also = new Date();
 
     it('should allow a constructor function to be curried/applied/called', function () {
       expect(jan1.getFullYear()).toBe(2015);
@@ -512,6 +514,7 @@
       expect(jan1.getHours()).toBe(12);
       expect(jan1.getMinutes()).toBe(0);
       expect(jan1.getSeconds()).toBe(0);
+      expect(Math.abs(also.getTime() - now.getTime())).toBeLessThan(500);
     });
 
     it('should not break instanceof', function () {
@@ -522,6 +525,27 @@
     });
   });
 
+  describe('lift', function () {
+    it('should wrap the return value in the passed in constructor', function () {
+      var liftD = d.lift(function () {
+        return makeDate.apply(undefined, arguments);
+      });
+      var now = new Date();
+      var later = liftD(function () {})();
+      var t1 = now.getTime();
+      var t2 = later.getTime();
+      if (Number.isNaN(t2)) {
+        throw new Error(later.toString() + ' is not a valid date');
+      }
+      expect(later instanceof Date).toBe(true);
+      expect(Math.abs(t2 - t1)).toBeLessThan(500);
+      var also = liftD(function () {
+        return [later.getFullYear(), later.getMonth(), later.getDate(), later.getHours(), later.getMinutes(), later.getSeconds()];
+      })();
+      expect(Math.abs(also.getTime() - later.getTime())).toBeLessThan(1000);
+    });
+  });
+
   describe('liftP', function () {
     it('should turn a function into a promise-returning fn', function (done) {
       var p = d.liftP(fortytwo)();
@@ -529,6 +553,22 @@
         expect(v).toBe(42);
         done();
       });
+    });
+  });
+
+  describe('liftA', function () {
+    var arr = d.liftA(fortytwo)();
+    it('should turn a function into a array-returning fn', function () {
+      expect(arr.length).toBe(1);
+      expect(arr[0]).toBe(42);
+    });
+
+    it('should auto-flatten', function () {
+      var returnsArray = function returnsArray() {
+        return [3];
+      };
+      var val = d.liftA(returnsArray)();
+      expect(val[0]).toBe(3);
     });
   });
 
@@ -565,6 +605,50 @@
         });
         done();
       }, 500);
+    });
+
+    // it('should be capable of recursion', function(done) {
+    //   let counter = 0
+    //   let padd = d.liftP((n) => {
+    //     counter += 1;
+    //     return n * counter;
+    //   });
+    //   let fin = d.loopP(padd, 2);
+    //   setTimeout(() => {
+    //     fin().then((v) => {
+    //       expect(v).toBe(counter * 2);
+    //       done();
+    //     });
+    //   }, 10);
+    // });
+  });
+
+  describe('timeoutP', function () {
+    it('should reject a promise that takes too long to resolve', function (done) {
+      var timeout = 100,
+          fn = d.liftP(function () {
+        return 3;
+      });
+      var fail = function fail() {
+        return new Promise(function (res, rej) {
+          setTimeout(function () {
+            return res(3);
+          }, 200);
+        });
+      };
+      var tre = d.timeoutP(timeout, fn)();
+      var uhoh = d.timeoutP(timeout, fail)();
+      tre.then(function (v) {
+        return expect(v).toBe(3);
+      });
+      uhoh.catch(function (e) {
+        return expect(e instanceof Error).toBe(true);
+      });
+      Promise.all([tre, uhoh]).then(function () {
+        return done();
+      }).catch(function () {
+        return done();
+      });
     });
   });
 });
