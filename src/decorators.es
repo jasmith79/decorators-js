@@ -88,16 +88,15 @@ const typeGuard = ((check) => {
     let arr = _isArray(ts) && ts.length ? ts : [ts];
     let types = arr.map((t) => 'string' === typeof t ? t.toLowerCase() : t);
     //keep all the args, but typecheck the first only, assume curried
-    return function(...args) {
-      let ctx = this === _global ? null : this;
+    return curry(fn.length, function(...args) {
       let test = check(args[0]);
       let passed = types.some(test);
       if (!passed) {
         let type = _getType(args[0]), expected = types.map(_getType).join(',');
         throw new TypeError(`In fn ${_getFnName(fn)} expected one of ${expected}, got ${type}.`);
       }
-      return fn.apply(ctx, args);
-    }
+      return fn.apply(this, args);
+    });
   });
 })(curry((arg, type) => {
   let passed = false, argType = typeof arg, t = typeof type, clazz = _class(arg);
@@ -117,22 +116,12 @@ const typeGuard = ((check) => {
 //_fnFirst :: (* -> *) -> (* -> *)
 const _fnFirst = typeGuard('function');
 
-//_noGlobalCtx :: (* -> a) -> (* -> a)
-//Ensures passed-in function is not executed with global context set to `this`. Returned function
-//is automatically curried.
-const _noGlobalCtx = _fnFirst((fn) => {
-  return curry(fn.length, function(...args) {
-    let ctx = this === _global ? null : this;
-    return fn.apply(ctx, args);
-  });
-});
-
 //unGather :: (* -> *) -> (* -> *)
 //Conditionally unnests the arguments to a function, useful for functions that use rest params to
 //gather args.
 const unGather = _fnFirst(function(...args) {
   let [fn, ...initArgs] = args;
-  let f = _noGlobalCtx(function(...fnArgs) {
+  let f = curry(fn.length, function(...fnArgs) {
     let arr = fnArgs[0], params = fnArgs.length === 1 && _isArray(arr) ? arr : fnArgs;
     return fn.apply(this, params);
   });
@@ -142,9 +131,9 @@ const unGather = _fnFirst(function(...args) {
 //maybe :: (* -> *) -> (* -> *)
 //maybe :: (* -> *) -> (Null -> Null)
 const maybe = _fnFirst((fn) => {
-  return _noGlobalCtx(curry(fn.length, function(...args) {
+  return curry(fn.length, function(...args) {
     return args.every(x => x != null) ? fn.apply(this, args) : null;
-  }));
+  });
 });
 
 //_trim :: String -> String
@@ -157,7 +146,7 @@ const debounce = curry((delay, fn) => {
     throw new TypeError("Cannot debounce a non-function");
   }
   let timer = null;
-  return _noGlobalCtx(function(...args) {
+  return curry(fn.length, function(...args) {
     clearTimeout(timer);
     timer = setTimeout(() => fn.apply(this, args), delay);
     return timer;
@@ -168,10 +157,10 @@ const debounce = curry((delay, fn) => {
 //Delay in milliseconds. Returns the timer ID so caller can cancel
 const throttle = curry((delay, fn) => {
   if ('function' !== typeof fn) {
-    throw new TypeError("Cannot debounce a non-function");
+    throw new TypeError("Cannot throttle a non-function");
   }
   let timer = null, last = null;
-  return _noGlobalCtx(function(...args) {
+  return curry(fn.length, function(...args) {
     let now = Date.now();
     if (last != null && (now < last + delay)) {
       clearTimeout(timer);
@@ -188,7 +177,7 @@ const throttle = curry((delay, fn) => {
 
 //log :: (* -> *) -> [*] -> *
 const log = _fnFirst((fn) => {
-  return curry(fn.length, _noGlobalCtx(function(...args) {
+  return curry(fn.length, function(...args) {
     let res = fn.apply(this, args);
     let result = null, name = _getFnName(fn), fnArgs = args.length ? args : "no arguments";
     switch (typeof res) {
@@ -202,7 +191,7 @@ const log = _fnFirst((fn) => {
     }
     console.log(`Fn ${name} called with ${fnArgs} yielding ${result}`);
     return res;
-  }));
+  });
 });
 
 //setLocalStorage :: (Event -> [String]), String, String -> (Event -> Event)
@@ -210,7 +199,7 @@ const log = _fnFirst((fn) => {
 //of the event target to local storage. The check on the return value of the function allows the
 //decorated function to supply alternative values for setting to localStorage.
 const setLocalStorage = _fnFirst((fn, prop = 'label', val = 'value') => {
-  return _noGlobalCtx(function(e) {
+  return curry(1, function(e) {
     let result = fn.call(this, e), el = e.currentTarget;
 
     //second half is for labels
@@ -227,7 +216,7 @@ const setLocalStorage = _fnFirst((fn, prop = 'label', val = 'value') => {
 //Turns a callback-accepting function into one that returns a Promise.
 const denodeify = _fnFirst((fn) => {
   let length = fn.length > 0 ? fn.length - 1 : 0;
-  return curry(length, _noGlobalCtx(function(...args) {
+  return curry(length, function(...args) {
     return new Promise((resolve, reject) => {
       fn.apply(this, [...args, (err, ...rest) => {
         if (err) {
@@ -248,7 +237,7 @@ const denodeify = _fnFirst((fn) => {
         resolve(result);
       }]);
     });
-  }));
+  });
 });
 
 //unNew :: (* -> {k:v}) -> (* -> {k:v})
@@ -281,17 +270,17 @@ const unNew = ((construct) => {
 //runtime :: (* -> *) -> (* -> *)
 const runtime = _fnFirst(f => {
   let fn = log(f), name = _getFnName(f);
-  return _noGlobalCtx(curry(f.length, function(...args) {
+  return curry(f.length, function(...args) {
     console.time(name);
     let result = fn.apply(this, args);
     console.timeEnd(name);
     return result;
-  }));
+  });
 });
 
 //trampoline :: (* -> *) -> (* -> *)
 const trampoline = _fnFirst((fn) => {
-  return _noGlobalCtx(function(...args) {
+  return curry(fn.length, function(...args) {
     let result = fn.apply(this, args);
     while (result instanceof Function) {
       result = result();
@@ -302,14 +291,14 @@ const trampoline = _fnFirst((fn) => {
 
 //liftP :: (* -> *) -> (* -> Promise *)
 const liftP = _fnFirst((fn) => {
-  return _noGlobalCtx(curry(fn.length, function(...args) {
+  return curry(fn.length, function(...args) {
     return Promise.resolve(fn.apply(this, args));
-  }));
+  });
 });
 
 //bindP :: (* -> Promise *) -> (Promise * -> Promise *)
 const bindP = _fnFirst((fn) => {
-  return _noGlobalCtx(function(promise) {
+  return curry(1, function(promise) {
     return promise.then((a) => fn.call(this, a));
   });
 });
@@ -320,7 +309,7 @@ const bindP = _fnFirst((fn) => {
 //the DOM. Useful for long-polling. Returns a function that when called breaks the loop and returns
 //a Promise of last value.
 const loopP = ((err) => {
-  return _fnFirst(_noGlobalCtx(function(fn) {
+  return _fnFirst(function(fn) {
     let done = false, promise = fn();
     if ('function' !== typeof promise.then) {
       throw err;
@@ -342,8 +331,12 @@ const loopP = ((err) => {
       done = true;
       return promise;
     };
-  }));
+  });
 })(new TypeError('Callback function must return a Promise'));
+
+// const timeoutP = typeGuard('number', curry(2, function(timeout, fn) {
+//
+// }));
 
 export {
   curry,

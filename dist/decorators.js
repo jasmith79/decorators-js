@@ -142,9 +142,7 @@
         return 'string' === typeof t ? t.toLowerCase() : t;
       });
       //keep all the args, but typecheck the first only, assume curried
-      return function () {
-        var ctx = this === _global ? null : this;
-
+      return curry(fn.length, function () {
         for (var _len4 = arguments.length, args = Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
           args[_key4] = arguments[_key4];
         }
@@ -156,8 +154,8 @@
               expected = types.map(_getType).join(',');
           throw new TypeError('In fn ' + _getFnName(fn) + ' expected one of ' + expected + ', got ' + type + '.');
         }
-        return fn.apply(ctx, args);
-      };
+        return fn.apply(this, args);
+      });
     });
   }(curry(function (arg, type) {
     var passed = false,
@@ -185,8 +183,6 @@
   //is automatically curried.
   var _noGlobalCtx = _fnFirst(function (fn) {
     return curry(fn.length, function () {
-      var ctx = this === _global ? null : this;
-
       for (var _len5 = arguments.length, args = Array(_len5), _key5 = 0; _key5 < _len5; _key5++) {
         args[_key5] = arguments[_key5];
       }
@@ -206,7 +202,7 @@
     var fn = args[0];
     var initArgs = args.slice(1);
 
-    var f = _noGlobalCtx(function () {
+    var f = curry(fn.length, function () {
       for (var _len7 = arguments.length, fnArgs = Array(_len7), _key7 = 0; _key7 < _len7; _key7++) {
         fnArgs[_key7] = arguments[_key7];
       }
@@ -221,7 +217,7 @@
   //maybe :: (* -> *) -> (* -> *)
   //maybe :: (* -> *) -> (Null -> Null)
   var maybe = _fnFirst(function (fn) {
-    return _noGlobalCtx(curry(fn.length, function () {
+    return curry(fn.length, function () {
       for (var _len8 = arguments.length, args = Array(_len8), _key8 = 0; _key8 < _len8; _key8++) {
         args[_key8] = arguments[_key8];
       }
@@ -229,7 +225,7 @@
       return args.every(function (x) {
         return x != null;
       }) ? fn.apply(this, args) : null;
-    }));
+    });
   });
 
   //_trim :: String -> String
@@ -244,7 +240,7 @@
       throw new TypeError("Cannot debounce a non-function");
     }
     var timer = null;
-    return _noGlobalCtx(function () {
+    return curry(fn.length, function () {
       var _this = this;
 
       for (var _len9 = arguments.length, args = Array(_len9), _key9 = 0; _key9 < _len9; _key9++) {
@@ -263,11 +259,11 @@
   //Delay in milliseconds. Returns the timer ID so caller can cancel
   var throttle = curry(function (delay, fn) {
     if ('function' !== typeof fn) {
-      throw new TypeError("Cannot debounce a non-function");
+      throw new TypeError("Cannot throttle a non-function");
     }
     var timer = null,
         last = null;
-    return _noGlobalCtx(function () {
+    return curry(fn.length, function () {
       var _this2 = this;
 
       for (var _len10 = arguments.length, args = Array(_len10), _key10 = 0; _key10 < _len10; _key10++) {
@@ -290,7 +286,7 @@
 
   //log :: (* -> *) -> [*] -> *
   var log = _fnFirst(function (fn) {
-    return curry(fn.length, _noGlobalCtx(function () {
+    return curry(fn.length, function () {
       for (var _len11 = arguments.length, args = Array(_len11), _key11 = 0; _key11 < _len11; _key11++) {
         args[_key11] = arguments[_key11];
       }
@@ -310,7 +306,7 @@
       }
       console.log('Fn ' + name + ' called with ' + fnArgs + ' yielding ' + result);
       return res;
-    }));
+    });
   });
 
   //setLocalStorage :: (Event -> [String]), String, String -> (Event -> Event)
@@ -321,7 +317,7 @@
     var prop = arguments.length <= 1 || arguments[1] === undefined ? 'label' : arguments[1];
     var val = arguments.length <= 2 || arguments[2] === undefined ? 'value' : arguments[2];
 
-    return _noGlobalCtx(function (e) {
+    return curry(1, function (e) {
       var result = fn.call(this, e),
           el = e.currentTarget;
 
@@ -339,7 +335,7 @@
   //Turns a callback-accepting function into one that returns a Promise.
   var denodeify = _fnFirst(function (fn) {
     var length = fn.length > 0 ? fn.length - 1 : 0;
-    return curry(length, _noGlobalCtx(function () {
+    return curry(length, function () {
       var _this3 = this;
 
       for (var _len12 = arguments.length, args = Array(_len12), _key12 = 0; _key12 < _len12; _key12++) {
@@ -370,7 +366,7 @@
           resolve(result);
         }]));
       });
-    }));
+    });
   });
 
   //unNew :: (* -> {k:v}) -> (* -> {k:v})
@@ -414,7 +410,7 @@
   var runtime = _fnFirst(function (f) {
     var fn = log(f),
         name = _getFnName(f);
-    return _noGlobalCtx(curry(f.length, function () {
+    return curry(f.length, function () {
       console.time(name);
 
       for (var _len16 = arguments.length, args = Array(_len16), _key16 = 0; _key16 < _len16; _key16++) {
@@ -424,12 +420,12 @@
       var result = fn.apply(this, args);
       console.timeEnd(name);
       return result;
-    }));
+    });
   });
 
   //trampoline :: (* -> *) -> (* -> *)
   var trampoline = _fnFirst(function (fn) {
-    return _noGlobalCtx(function () {
+    return curry(fn.length, function () {
       for (var _len17 = arguments.length, args = Array(_len17), _key17 = 0; _key17 < _len17; _key17++) {
         args[_key17] = arguments[_key17];
       }
@@ -444,18 +440,18 @@
 
   //liftP :: (* -> *) -> (* -> Promise *)
   var liftP = _fnFirst(function (fn) {
-    return _noGlobalCtx(curry(fn.length, function () {
+    return curry(fn.length, function () {
       for (var _len18 = arguments.length, args = Array(_len18), _key18 = 0; _key18 < _len18; _key18++) {
         args[_key18] = arguments[_key18];
       }
 
       return Promise.resolve(fn.apply(this, args));
-    }));
+    });
   });
 
   //bindP :: (* -> Promise *) -> (Promise * -> Promise *)
   var bindP = _fnFirst(function (fn) {
-    return _noGlobalCtx(function (promise) {
+    return curry(1, function (promise) {
       var _this4 = this;
 
       return promise.then(function (a) {
@@ -470,7 +466,7 @@
   //the DOM. Useful for long-polling. Returns a function that when called breaks the loop and returns
   //a Promise of last value.
   var loopP = function (err) {
-    return _fnFirst(_noGlobalCtx(function (fn) {
+    return _fnFirst(function (fn) {
       var done = false,
           promise = fn();
       if ('function' !== typeof promise.then) {
@@ -497,8 +493,12 @@
         done = true;
         return promise;
       };
-    }));
+    });
   }(new TypeError('Callback function must return a Promise'));
+
+  // const timeoutP = typeGuard('number', curry(2, function(timeout, fn) {
+  //
+  // }));
 
   exports.curry = curry;
   exports.typeGuard = typeGuard;
