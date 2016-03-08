@@ -57,7 +57,7 @@ have to explicitly bind the context before handing it to the decorator.
   Unless you want the currying.
 
 ###unGather
-  `unGather :: ([[a]] -> a) -> ([a] -> a)`
+  `unGather :: ([*] -> *) -> ([[*]] -> *)`
 
   Conditionally unnests the argument to a function. Useful for functions that take rest parameters.
   Consider:
@@ -93,8 +93,8 @@ have to explicitly bind the context before handing it to the decorator.
   code.
 
 ###curry
-  `curry ([a] -> a) -> ([a] -> a)`
-  `curry Number -> ([a] -> a) -> ([a] -> a)`
+  `curry ([*] -> *) -> ([*] -> *)`
+  `curry Number -> ([*] -> *) -> ([*] -> *)`
 
   Implemented it because I needed it internally and I've exposed it purely for convenience: I
   recommend using [Ramda's](http://ramdajs.com/0.19.0/index.html) or at least
@@ -102,7 +102,7 @@ have to explicitly bind the context before handing it to the decorator.
   or the function's length property.
 
 ###typeGuard
-  `typeGuard :: [String] -> (* -> *) -> (* -> *)`
+  `typeGuard :: [String] -> (a -> *) -> (a -> *)`
 
   Takes a list of types to check against the first argument of the decorated function. Can test
   constructors, primitives, string types (e.g. 'function', 'boolean'), and will duck-type objects
