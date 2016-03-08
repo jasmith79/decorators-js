@@ -14,19 +14,19 @@ have to explicitly bind the context before handing it to the decorator.
 
 ###maybe
   `maybe :: (* -> a) -> (* -> a)`
-  `maybe :: (* -> a) -> (null -> null)`
+  `maybe :: (* -> a) -> (Null -> Null)`
 
   Returns `null` if any of its arguments are `null` or `undefined`, otherwise returns the result
   of applying the passed-in function to the arguments. If the passed-in function has an arity of
   0 it may be successfully called with no arguments.
 
 ###debounce
-  `debounce :: Int -> (a -> Null) -> Int`
+  `debounce :: Number -> (a -> Null) -> Number`
 
   Debounces passed in function. Returns the `setTimeout` handle so caller can cancel.
 
 ###throttle
-  `throttle :: Int -> (a -> Null) -> Int`
+  `throttle :: Number -> (a -> Null) -> Number`
 
   Throttles passed in function. Returns the `setTimeout` handle so caller can cancel.
 
@@ -94,7 +94,7 @@ have to explicitly bind the context before handing it to the decorator.
 
 ###curry
   `curry ([a] -> a) -> ([a] -> a)`
-  `curry Int -> ([a] -> a) -> ([a] -> a)`
+  `curry Number -> ([a] -> a) -> ([a] -> a)`
 
   Implemented it because I needed it internally and I've exposed it purely for convenience: I
   recommend using [Ramda's](http://ramdajs.com/0.19.0/index.html) or at least
@@ -106,4 +106,43 @@ have to explicitly bind the context before handing it to the decorator.
 
   Takes a list of types to check against the first argument of the decorated function. Can test
   constructors, primitives, string types (e.g. 'function', 'boolean'), and will duck-type objects
-  based on either their constructors name or their internal class property.
+  based on either their constructors name or their internal class property. Although this will
+  not provide the same benefits as static type-checking, what it *does* do is eliminate the silent
+  fail case: strings and arrays have many of the same methods, the `+` handles strings *and*
+  numbers, `typeof null === 'object'`, etc.
+
+###lift
+  `lift :: (* -> a) -> (* -> *) -> (* -> a)`
+  Generic lift function. Takes a type constructor for type a and wraps the return value of the
+  passed-in function in type a. Type constructors should be guarded, for an example see liftP and
+  liftA below. Note that if the function returns an *array* then array will be applied to the
+  constructor, i.e. constructors requiring `new` should be wrapped in unNew.
+
+###liftA
+  `liftA :: (* -> *) -> (* -> [*])`
+
+  Wraps the return value of the passed-in function in an array.
+
+###liftP
+  `liftP :: (* -> *) -> (* -> Promise *)`
+
+  Wraps the return value of the passed-in function in a Promise.
+
+###bindP
+  `bindP :: (* -> Promise *) -> (Promise * -> Promise *)`
+
+  Bind for the Promise (a.k.a Continuation) Monad.
+
+###loopP
+  `loopP :: (* -> *) -> (Null -> Promise *)`
+
+  Starts a loop that continually calls the promise-returning function each time the previous
+  iteration resolves with the value of that resolution. Useful for long-polling. Returns a function
+  that when called breaks the loop and returns a Promise of last value. Can be used for asynchronous
+  recursion.
+
+#timeoutP
+  `timeoutP :: Number -> (* -> Promise *) -> (* -> Promise *)`
+
+  Rejects if the promise returned from the function takes longer than the given delay to resolve.
+  Timeout in milliseconds.
