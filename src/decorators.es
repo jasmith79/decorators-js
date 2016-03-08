@@ -147,6 +147,9 @@ const debounce = curry((delay, fn) => {
   }
   let timer = null;
   return curry(fn.length, function(...args) {
+    if (timer == null) {
+      fn.apply(this, args);
+    }
     clearTimeout(timer);
     timer = setTimeout(() => fn.apply(this, args), delay);
     return timer;

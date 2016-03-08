@@ -244,8 +244,14 @@ describe('debounce', function() {
     setTimeout(() => {
       expect(counter).toBe(1);
       expect(o.num).toBe(1);
-      done();
-    }, 1000);
+      setTimeout(() => {
+        f();
+        o.fn();
+        expect(counter).toBe(2);
+        expect(o.num).toBe(2);
+        done();
+      }, 200)
+    }, 400);
   });
 });
 

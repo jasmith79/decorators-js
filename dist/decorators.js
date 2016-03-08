@@ -246,6 +246,9 @@
         args[_key8] = arguments[_key8];
       }
 
+      if (timer == null) {
+        fn.apply(this, args);
+      }
       clearTimeout(timer);
       timer = setTimeout(function () {
         return fn.apply(_this, args);
