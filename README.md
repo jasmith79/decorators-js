@@ -1,6 +1,6 @@
 # decorators-js
 Common javascript decorators I use. You'll note some omissions like `memoize`. I use the
-[Ramda](http://ramdajs.com/0.18.0/index.html) library quite frequently and did not feel the need to
+[Ramda](http://ramdajs.com/0.19.0/index.html) library quite frequently and did not feel the need to
 duplicate their excellent work (although the module does not *depend* on Ramda, I implemented curry
 internally).
 
@@ -45,7 +45,7 @@ have to explicitly bind the context before handing it to the decorator.
 ###unNew
   `unNew :: (* -> {k:v}) -> (* -> {k:v})`
 
-  Similar to [Ramda's](http://ramdajs.com/0.18.0/index.html) `Construct`, `unNew` takes a
+  Similar to [Ramda's](http://ramdajs.com/0.19.0/index.html) `Construct`, `unNew` takes a
   Javascript constructor function and wraps it so that it functions properly when called without
   the `new` operator. Useful for (among other things) mapping a constructor over a list of
   configuration objects. NOTE: be careful when using with constructors that take optional
@@ -64,7 +64,7 @@ have to explicitly bind the context before handing it to the decorator.
   ```javascript
   let foo = (...args) => {
     if (args.length < 3) {
-      return foo(args.concat([1,2,3])); //Oops, recursive call adds a layer of nesting!
+      return foo([...args, 1,2,3]); //Oops, recursive call adds a layer of nesting!
     } else {
       return args.reduce(((acc, x) => acc + x;), 0);
     }
@@ -72,7 +72,7 @@ have to explicitly bind the context before handing it to the decorator.
   ```
   Certainly we could spread the array:
   ```javascript
-  foo(...args.concat([1,2,3]));
+  foo(...[...args, 1,2,3]));
   ```
   And for this simple case we should, but `unGather` provides an easy way to avoid this sort of
   error: when called with one argument that is an array it will automatically spread it for you.
