@@ -23,7 +23,9 @@ have to explicitly bind the context before handing it to the decorator.
 ###debounce
   `debounce :: Number -> (a -> Null) -> Number`
 
-  Debounces passed in function. Returns the `setTimeout` handle so caller can cancel.
+  Debounces passed in function. Returns the `setTimeout` handle so caller can cancel. NOTE: the
+  debounced function is what underscore calls leading-edge, if there's no pending timeout the
+  function is executed immediately.
 
 ###throttle
   `throttle :: Number -> (a -> Null) -> Number`
@@ -139,7 +141,7 @@ have to explicitly bind the context before handing it to the decorator.
   Starts a loop that continually calls the promise-returning function each time the previous
   iteration resolves with the value of that resolution. Useful for long-polling. Returns a function
   that when called breaks the loop and returns a Promise of last value. Can be used for asynchronous
-  recursion.
+  recursion (non-blocking).
 
 #timeoutP
   `timeoutP :: Number -> (* -> Promise *) -> (* -> Promise *)`
