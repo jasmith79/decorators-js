@@ -17,6 +17,15 @@ let makeDate = d.unNew(0, Date);
 let fortytwo = () => 42;
 class Foo {};
 class Bar extends Foo {};
+function factorial (n) {
+  var _factorial = d.trampoline( function myself (acc, n) {
+    return n
+    ? function () { return myself(acc * n, n - 1); }
+    : acc
+  });
+
+  return _factorial(1, n);
+}
 
 describe('curry', function() {
  it('should let arguments be passed in multiple calls', function() {
@@ -277,24 +286,6 @@ describe('denodeify', function() {
 
 describe('trampoline', function() {
   it('should use bounded stack space to run thunk-returning tail-recursive fns', function() {
-    // var factorial = function(n) {
-    //   var _factorial = d.trampoline(function myself(acc, n) {
-    //     return n > 0
-    //     ? function () { return myself(acc * n, n - 1); }
-    //     : acc;
-    //   });
-    //
-    //   return _factorial(1, n);
-    // };
-    function factorial (n) {
-      var _factorial = d.trampoline( function myself (acc, n) {
-        return n
-        ? function () { return myself(acc * n, n - 1); }
-        : acc
-      });
-
-      return _factorial(1, n);
-    }
     expect(factorial(32000)).toBe(Infinity);
   });
 });
@@ -405,20 +396,24 @@ describe('loopP', function() {
     }, 500);
   });
 
-  // it('should be capable of recursion', function(done) {
-  //   let counter = 0
-  //   let padd = d.liftP((n) => {
-  //     counter += 1;
-  //     return n * counter;
-  //   });
-  //   let fin = d.loopP(padd, 2);
-  //   setTimeout(() => {
-  //     fin().then((v) => {
-  //       expect(v).toBe(counter * 2);
-  //       done();
-  //     });
-  //   }, 10);
-  // });
+  it('should be capable of recursion', function(done) {
+    let counter = 0
+    let padd = d.liftP((n) => {
+      counter += 1;
+      return n + counter;
+    });
+    let fin = d.loopP(padd, 0);
+    setTimeout(() => {
+      fin().then((v) => {
+        let tally = 0;
+        for (let i=1; i <= counter; ++i) {
+          tally += i;
+        }
+        expect(v).toBe(tally);
+        done();
+      });
+    }, 5);
+  });
 });
 
 describe('timeoutP', function() {

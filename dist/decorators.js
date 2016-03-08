@@ -52,8 +52,8 @@
 
   /*   Functions   */
 
-  //curry ([a] -> a) -> ([a] -> a)
-  //curry Number -> ([a] -> a) -> ([a] -> a)
+  //curry ([*] -> *) -> ([*] -> *)
+  //curry Number -> ([*] -> *) -> ([*] -> *)
   //inspired by Nick Fitzgerald's implementation for wu.js
   var curry = function (c) {
     var _curry = function _curry(n, f) {
@@ -146,7 +146,7 @@
     }
   };
 
-  //typeGuard :: [String] -> (* -> *) -> (* -> *)
+  //typeGuard :: [String] -> (a -> *) -> (a -> *)
   var typeGuard = function (check) {
     return curry(function (ts, fn) {
       var arr = _isArray(ts) && ts.length ? ts : [ts];
@@ -330,7 +330,7 @@
     });
   });
 
-  //denodeify :: (* -> a) -> (* -> Promise a)
+  //denodeify :: (* -> *) -> (* -> Promise *)
   //Turns a callback-accepting function into one that returns a Promise.
   var denodeify = _fnFirst(function (fn) {
     var length = fn.length > 0 ? fn.length - 1 : 0;
@@ -509,7 +509,7 @@
       var update = function update(val) {
         return promise = fn(val).then(function (v) {
           if (!done) {
-            enqueue();
+            setTimeout(enqueue, 0);
           }
           return v;
         });

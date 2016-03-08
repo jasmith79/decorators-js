@@ -15,8 +15,8 @@ const _global = (() => {
 
 /*   Functions   */
 
-//curry ([a] -> a) -> ([a] -> a)
-//curry Number -> ([a] -> a) -> ([a] -> a)
+//curry ([*] -> *) -> ([*] -> *)
+//curry Number -> ([*] -> *) -> ([*] -> *)
 //inspired by Nick Fitzgerald's implementation for wu.js
 const curry = ((c) => {
   let _curry = function(n, f) {
@@ -82,7 +82,7 @@ const _getType = (t) => {
   }
 };
 
-//typeGuard :: [String] -> (* -> *) -> (* -> *)
+//typeGuard :: [String] -> (a -> *) -> (a -> *)
 const typeGuard = ((check) => {
   return curry((ts, fn) => {
     let arr = _isArray(ts) && ts.length ? ts : [ts];
@@ -212,7 +212,7 @@ const setLocalStorage = _fnFirst((fn, prop = 'label', val = 'value') => {
   });
 });
 
-//denodeify :: (* -> a) -> (* -> Promise a)
+//denodeify :: (* -> *) -> (* -> Promise *)
 //Turns a callback-accepting function into one that returns a Promise.
 const denodeify = _fnFirst((fn) => {
   let length = fn.length > 0 ? fn.length - 1 : 0;
@@ -332,7 +332,7 @@ const loopP = ((err) => {
     }
     let update = (val) => promise = fn(val).then((v) => {
       if (!done) {
-        enqueue();
+        setTimeout(enqueue, 0);
       }
       return v;
     });
