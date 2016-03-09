@@ -4,7 +4,7 @@
   "description": "Common javascript decorators",
   "main": "dist/decorators.js",
   "scripts": {
-    "test": "jasmine"
+    "test": "phantomjs"
   },
   "repository": {
     "type": "git",
