@@ -10,6 +10,12 @@ passed a top-level function in non-strict mode, the context will be `null` rathe
 `global`. If you wish a function to be evaluated with `this` being the global meta-object you will
 have to explicitly bind the context before handing it to the decorator.
 
+##Testing
+
+To run the tests that can be run in node, type `make test`. To run all tests including those that
+require a browser, type `node spec/server.js` and point your browser at `localhost:8080`. NOTE:
+both of these commands require being in the root project directory to properly resolve file paths.
+
 ##API
 
 ###maybe
