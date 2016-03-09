@@ -47,7 +47,8 @@
   var _global = function _global() {
     var window = window || null;
     var global = global || null;
-    return window || global;
+    var self = self || null;
+    return window || global || self;
   };
 
   /*   Functions   */

@@ -12,9 +12,16 @@ have to explicitly bind the context before handing it to the decorator.
 
 ##Testing
 
-To run the tests that can be run in node, type `make test`. To run all tests including those that
-require a browser, type `node spec/server.js` and point your browser at `localhost:8080`. NOTE:
-both of these commands require being in the root project directory to properly resolve file paths.
+Uses a combination of jasmine and phantomjs. Note that phantomjs is not entirely compliant yet. I've
+polyfilled as much as possible, but some tests can't be run in phantomjs. Also there are a few node-specific tests. So to cover all bases:
+
+* Simple version, covers most tests, type `make test` to run tests with phantomjs
+* Node version type `make jasmine`.
+* Alternatively for a browser test of your choice, type `node spec/server.js` and point your browser
+  at [localhost:8080](http://localhost:8080).
+
+Whichever way you choose, any skipped tests should be logged to the console. Note that all of these
+commands will only work in the root directory of the project.
 
 ##API
 

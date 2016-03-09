@@ -9,6 +9,13 @@
 
 import * as d from './decorators.js';
 
+const _global = (() => {
+  let window = window || null;
+  let global = global || null;
+  let self   = self   || null;
+  return window || global || self;
+});
+
 //Some tests require a browser, so....
 const WORKER = 'function' === typeof Worker && 'undefined' !== typeof URL;
 const LOCAL_STORE = 'undefined' !== typeof localStorage;
@@ -29,6 +36,20 @@ function factorial (n) {
   });
 
   return _factorial(1, n);
+}
+
+/*   phantomjs polyfill whatnot   */
+const SYMBOL = 'undefined' !== typeof Symbol
+if (!SYMBOL) {
+  _global.Symbol = function Symbol(str) {
+    return {
+      _value: str,
+      toString: function() { return this._value; }
+    }
+  };
+}
+Number.isNaN = Number.isNaN || function(x) {
+  return x !== x;
 }
 
 describe('curry', function() {
@@ -60,11 +81,9 @@ describe('typeGuard', function() {
     let number  = d.typeGuard('number',    identity);
     let func    = d.typeGuard('function',  identity);
     let object  = d.typeGuard('object',    identity);
-    let symbol  = d.typeGuard('symbol',    identity);
     let undef   = d.typeGuard('undefined', identity);
     let boolean = d.typeGuard('boolean',   identity);
     let o       = {};
-    let sym     = Symbol('sym');
     expect(string('a')).toBe('a');
     expect((() => string(3))).toThrowError(TypeError);
     expect(number(3)).toBe(3);
@@ -73,12 +92,18 @@ describe('typeGuard', function() {
     expect((() => func(3))).toThrowError(TypeError);
     expect(object(o)).toBe(o);
     expect((() => object(3))).toThrowError(TypeError);
-    expect(symbol(sym)).toBe(sym);
-    expect((() => symbol('sym'))).toThrowError(TypeError);
     expect(undef(undefined)).toBe(undefined);
     expect((() => undef(null))).toThrowError(TypeError);
     expect(boolean(true)).toBe(true);
     expect((() => boolean(null))).toThrowError(TypeError);
+    if (SYMBOL) {
+      let symbol  = d.typeGuard('symbol',    identity);
+      let sym     = Symbol('sym');
+      expect(symbol(sym)).toBe(sym);
+      expect((() => symbol('sym'))).toThrowError(TypeError);
+    } else {
+      console.log('skipping Symbol tests');
+    }
   });
 
   it('should work for instances of constructors custom and builtin ctor/literals', function() {
@@ -374,7 +399,7 @@ describe('liftA', function() {
     let val = d.liftA(returnsArray)();
     expect(val[0]).toBe(3);
   });
-})
+});
 
 describe('bindP', function() {
   it('should turn a -> a into Promise a -> Promise a', function(done) {
@@ -483,6 +508,8 @@ if (LOCAL_STORE) {
       expect(localStorage.getItem('yo')).toBe('12');
     });
   });
+} else {
+  console.log('skipping localStorage test');
 }
 
 if (WORKER) {
@@ -502,4 +529,6 @@ if (WORKER) {
       }).catch(errHandle);
     });
   });
+} else {
+  console.log('skipping Worker test');
 }

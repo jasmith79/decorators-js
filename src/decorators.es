@@ -10,7 +10,8 @@
 const _global = (() => {
   let window = window || null;
   let global = global || null;
-  return window || global;
+  let self   = self   || null;
+  return window || global || self;
 });
 
 /*   Functions   */

@@ -100,6 +100,13 @@
     }
   }
 
+  var _global = function _global() {
+    var window = window || null;
+    var global = global || null;
+    var self = self || null;
+    return window || global || self;
+  };
+
   //Some tests require a browser, so....
   var WORKER = 'function' === typeof Worker && 'undefined' !== typeof URL;
   var LOCAL_STORE = 'undefined' !== typeof localStorage;
@@ -146,6 +153,22 @@
     return _factorial(1, n);
   }
 
+  /*   phantomjs polyfill whatnot   */
+  var SYMBOL = 'undefined' !== typeof Symbol;
+  if (!SYMBOL) {
+    _global.Symbol = function _Symbol(str) {
+      return {
+        _value: str,
+        toString: function toString() {
+          return this._value;
+        }
+      };
+    };
+  }
+  Number.isNaN = Number.isNaN || function (x) {
+    return x !== x;
+  };
+
   describe('curry', function () {
     it('should let arguments be passed in multiple calls', function () {
       var fn = d.curry(sum);
@@ -175,11 +198,9 @@
       var number = d.typeGuard('number', identity);
       var func = d.typeGuard('function', identity);
       var object = d.typeGuard('object', identity);
-      var symbol = d.typeGuard('symbol', identity);
       var undef = d.typeGuard('undefined', identity);
       var boolean = d.typeGuard('boolean', identity);
       var o = {};
-      var sym = Symbol('sym');
       expect(string('a')).toBe('a');
       expect(function () {
         return string(3);
@@ -196,10 +217,6 @@
       expect(function () {
         return object(3);
       }).toThrowError(TypeError);
-      expect(symbol(sym)).toBe(sym);
-      expect(function () {
-        return symbol('sym');
-      }).toThrowError(TypeError);
       expect(undef(undefined)).toBe(undefined);
       expect(function () {
         return undef(null);
@@ -208,6 +225,18 @@
       expect(function () {
         return boolean(null);
       }).toThrowError(TypeError);
+      if (SYMBOL) {
+        (function () {
+          var symbol = d.typeGuard('symbol', identity);
+          var sym = Symbol('sym');
+          expect(symbol(sym)).toBe(sym);
+          expect(function () {
+            return symbol('sym');
+          }).toThrowError(TypeError);
+        })();
+      } else {
+        console.log('skipping Symbol tests');
+      }
     });
 
     it('should work for instances of constructors custom and builtin ctor/literals', function () {
@@ -702,6 +731,8 @@
         expect(localStorage.getItem('yo')).toBe('12');
       });
     });
+  } else {
+    console.log('skipping localStorage test');
   }
 
   if (WORKER) {
@@ -723,5 +754,7 @@
         }).catch(errHandle);
       });
     });
+  } else {
+    console.log('skipping Worker test');
   }
 });
