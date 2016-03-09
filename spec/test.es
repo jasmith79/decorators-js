@@ -7,7 +7,7 @@
  *
  */
 
-import * as d from './decorators.min.js';
+import * as d from './decorators.js';
 
 //needed for multiple tests
 let sum      = function(a,b,c) { return a + b + c; };
@@ -214,7 +214,7 @@ describe('throttle', function() {
     };
     f();
     o.fn();
-    setTimeout(f, 100);    //should be delayed
+    setTimeout(f, 100);            //should be delayed
     setTimeout(() => o.fn(), 100); //should be delayed
     setTimeout(() => {
        expect(counter).toBe(1);
@@ -397,8 +397,8 @@ describe('loopP', function() {
         expect(value).toBe(3);
         expect(counter).toBeGreaterThan(3);
         expect(counter).toBeLessThan(6);
+        done();
       });
-      done();
     }, 500);
   });
 

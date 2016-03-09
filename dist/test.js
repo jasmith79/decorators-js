@@ -1,19 +1,19 @@
 (function (global, factory) {
   if (typeof define === "function" && define.amd) {
-    define(['./decorators.min.js'], factory);
+    define(['./decorators.js'], factory);
   } else if (typeof exports !== "undefined") {
-    factory(require('./decorators.min.js'));
+    factory(require('./decorators.js'));
   } else {
     var mod = {
       exports: {}
     };
-    factory(global.decoratorsMin);
+    factory(global.decorators);
     global.test = mod.exports;
   }
-})(this, function (_decoratorsMin) {
+})(this, function (_decorators) {
   'use strict';
 
-  var d = _interopRequireWildcard(_decoratorsMin);
+  var d = _interopRequireWildcard(_decorators);
 
   function _interopRequireWildcard(obj) {
     if (obj && obj.__esModule) {
@@ -599,8 +599,8 @@
           expect(value).toBe(3);
           expect(counter).toBeGreaterThan(3);
           expect(counter).toBeLessThan(6);
+          done();
         });
-        done();
       }, 500);
     });
 
