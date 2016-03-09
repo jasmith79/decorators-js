@@ -164,5 +164,5 @@ both of these commands require being in the root project directory to properly r
   Runs the passed-in function in a [Web worker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API). Note that Workers take
   basically one argument in a message, so although `parallelize` will gather the arguments into an
   array for you if you wish to your function to handle multiple arguments the function needs to
-  expect an array/object. Note also that the function is string-serialized, meaning no `liftA`
+  expect an array/object. Note also that the function is string-serialized, meaning no `bindA`
   unfortunately.
