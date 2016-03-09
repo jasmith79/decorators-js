@@ -24,4 +24,4 @@ $(APP): $(SRC)
 $(TESTS): $(TES)
 	@mkdir -p $(@D)
 	babel $< -o $@
-.PHONY: all clean install build test
+.PHONY: all clean install build test jasmine
