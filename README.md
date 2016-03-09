@@ -90,7 +90,8 @@ both of these commands require being in the root project directory to properly r
 
   Decorates event handlers so that the change in value is automatically logged to `localStorage`.
   Note that this function is **not** `debounced`/`throttled` by default, you will need to do so
-  yourself.
+  yourself. Also note that context is not preserved, if the meaning of `this` matters to your
+  handler, bind it before passing it to the decorator.
 
 ###runtime
   `runtime :: (* -> a) -> (* -> a)`
@@ -149,7 +150,7 @@ both of these commands require being in the root project directory to properly r
   that when called breaks the loop and returns a Promise of last value. Can be used for asynchronous
   recursion (non-blocking).
 
-#timeoutP
+###timeoutP
   `timeoutP :: Number -> (* -> Promise *) -> (* -> Promise *)`
 
   Rejects if the promise returned from the function takes longer than the given delay to resolve.
