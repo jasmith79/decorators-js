@@ -65,25 +65,25 @@ const _class = ((r) => a => Object.prototype.toString.call(a).match(r)[1])(/\s([
 //IE workaround for lack of Array.isArray
 const _isArray = a => _class(a) === 'Array' || (a instanceof Array);
 
-//_getType :: * -> String
-const _getType = (t) => {
-  switch (true) {
-    case ('string' === typeof t):
-      return t;
-    case ('symbol' === typeof t):
-    case ('undefined' === typeof t):
-    case ('boolean' === typeof t):
-    case ('number' === typeof t):
-      return typeof t;
-    case ('function' === typeof t):
-      return _getFnName(t); //assume constructor
-    case ('object' === typeof t):
-      return null === t ? 'null' : (t.constructor.name || _class(t));
-  }
-};
+//getType :: * -> String
+// const getType = (t) => {
+//   switch (true) {
+//     case ('string' === typeof t):
+//       return t;
+//     case ('symbol' === typeof t):
+//     case ('undefined' === typeof t):
+//     case ('boolean' === typeof t):
+//     case ('number' === typeof t):
+//       return typeof t;
+//     case ('function' === typeof t):
+//       return _getFnName(t); //assume constructor
+//     case ('object' === typeof t):
+//       return null === t ? 'null' : (t.constructor.name || _class(t));
+//   }
+// };
 
 //typeGuard :: [String] -> (a -> *) -> (a -> *)
-const typeGuard = ((check) => {
+const typeGuard = ((check, getType) => {
   return curry((ts, fn) => {
     let arr = _isArray(ts) && ts.length ? ts : [ts];
     let types = arr.map((t) => 'string' === typeof t ? t.toLowerCase() : t);
@@ -92,7 +92,7 @@ const typeGuard = ((check) => {
       let test = check(args[0]);
       let passed = types.some(test);
       if (!passed) {
-        let type = _getType(args[0]), expected = types.map(_getType).join(',');
+        let type = getType(args[0]), expected = types.map(getType).join(',');
         throw new TypeError(`In fn ${_getFnName(fn)} expected one of ${expected}, got ${type}.`);
       }
       return fn.apply(this, args);
@@ -111,7 +111,21 @@ const typeGuard = ((check) => {
       break;
   }
   return passed;
-}));
+}), (t) => {
+  switch (true) {
+    case ('string' === typeof t):
+      return t;
+    case ('symbol' === typeof t):
+    case ('undefined' === typeof t):
+    case ('boolean' === typeof t):
+    case ('number' === typeof t):
+      return typeof t;
+    case ('function' === typeof t):
+      return _getFnName(t); //assume constructor
+    case ('object' === typeof t):
+      return null === t ? 'null' : (t.constructor.name || _class(t));
+  }
+});
 
 //_fnFirst :: (* -> *) -> (* -> *)
 const _fnFirst = typeGuard('function');
@@ -201,19 +215,52 @@ const log = _fnFirst((fn) => {
 //meant to decorate an event handler with adding the current value (or whatever desired property)
 //of the event target to local storage. The check on the return value of the function allows the
 //decorated function to supply alternative values for setting to localStorage.
-const setLocalStorage = _fnFirst((fn, prop = 'label', val = 'value') => {
-  return curry(1, function(e) {
-    let result = fn.call(this, e), el = e.currentTarget;
+// const setLocalStorage = _fnFirst((fn, prop = 'label', val = 'value') => {
+//   return curry(1, function(e) {
+//     let result = fn.call(this, e), el = e.currentTarget;
+//
+//     //second half is for labels
+//     let key = el[prop] || el.parentNode.textContent.trim();
+//     let value = _trim(el[val]);
+//     if (key != null && value != null) {
+//       localStorage.setItem(key, value);
+//     }
+//     return e;
+//   });
+// });
 
-    //second half is for labels
-    let key = el[prop] || el.parentNode.textContent.trim();
-    let value = _trim(el[val]);
-    if (key != null && value != null) {
-      localStorage.setItem(key, value);
-    }
-    return e;
-  });
-});
+const setLocalStorage = (...args) => {
+  let f = curry(typeGuard(['function', 'string'], (prop, v, func) => {
+    return curry(1, function(e) {
+      let arity2 = 'function' === typeof v;
+      let val    = arity2 ? 'value' : v;
+      let fn     = arity2 ? v : func;
+      let result = fn.call(null, e), el = e.currentTarget || this; //google maps
+
+      //second half is for labels
+      let key = el[prop] || el.parentNode.textContent.trim();
+      let value = val === null ? result : _trim(el[val]);
+      if (key != null && value != null) {
+        localStorage.setItem(key, value);
+      }
+      return e;
+    });
+  }));
+
+  switch (false) {
+    case (!(args.length === 1)):
+      if ('function' === typeof args[0]) {
+        return f('label', 'value', args[0]);
+      } else {
+        return f(args[0]);
+      }
+    case (!(args.length === 2 && 'function' === typeof args[1])):
+      let [value, fn] = args;
+      return f('label', value, fn);
+    default:
+      return f(...args);
+  }
+};
 
 //denodeify :: (* -> *) -> (* -> Promise *)
 //Turns a callback-accepting function into one that returns a Promise.

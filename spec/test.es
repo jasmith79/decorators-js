@@ -9,6 +9,10 @@
 
 import * as d from './decorators.js';
 
+//Some tests require a browser, so....
+const WORKER = 'function' === typeof Worker;
+const LOCAL_STORE = 'undefined' !== typeof localStorage;
+
 //needed for multiple tests
 let sum      = function(a,b,c) { return a + b + c; };
 let noop     = function(){};
@@ -435,3 +439,46 @@ describe('timeoutP', function() {
     Promise.all([tre, uhoh]).then(() => done()).catch(() => done());
   });
 });
+
+if (LOCAL_STORE) {
+  describe('setLocalStorage', function() {
+    it('should store the currentTargets info in localStorage for handlers', function() {
+      let el = document.createElement('input');
+      el.label = 'foo';
+      el.value = 'bar';
+      el.addEventListener('click', d.setLocalStorage((e) => {}));
+      el.dispatchEvent(new Event('click'));
+      expect(localStorage.getItem('foo')).toBe('bar');
+    });
+
+    it('should work with custom keys/values', function() {
+      let el = document.createElement('div');
+      el.baz = 'baz';
+      el.qux = 'qux';
+      el.addEventListener('change', d.setLocalStorage('baz', 'qux', (e) => {}));
+      el.dispatchEvent(new Event('change'));
+      expect(localStorage.getItem('baz')).toBe('qux');
+    });
+
+    it('should work for any of the following type signatures', function() {
+      //setLocalStorage :: String -> String -> (Event -> *) -> (Event -> Event), covered above
+      //setLocalStorage :: String -> (Event -> *) -> (Event -> Event)
+      //setLocalStorage :: (Event -> *) -> (Event -> Event), covered above
+      let el   = document.createElement('div');
+      el.val   = 'imaval';
+      el.label = 'imakey';
+      el.addEventListener('keydown', d.setLocalStorage('val', (e) => {}));
+      el.dispatchEvent(new Event('keydown'));
+      expect(localStorage.getItem('imakey')).toBe('imaval');
+    });
+
+    it('should use the result of the event handler if val is null', function() {
+      let el   = document.createElement('div');
+      el.label   = 'yo';
+      el.value   = 'mamasofat';
+      el.addEventListener('click', d.setLocalStorage(null, (e) => { return 12; }));
+      el.dispatchEvent(new Event('click'));
+      expect(localStorage.getItem('yo')).toBe('12');
+    });
+  });
+}

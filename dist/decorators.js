@@ -129,25 +129,25 @@
     return _class(a) === 'Array' || a instanceof Array;
   };
 
-  //_getType :: * -> String
-  var _getType = function _getType(t) {
-    switch (true) {
-      case 'string' === typeof t:
-        return t;
-      case 'symbol' === (typeof t === 'undefined' ? 'undefined' : _typeof(t)):
-      case 'undefined' === typeof t:
-      case 'boolean' === typeof t:
-      case 'number' === typeof t:
-        return typeof t === 'undefined' ? 'undefined' : _typeof(t);
-      case 'function' === typeof t:
-        return _getFnName(t); //assume constructor
-      case 'object' === (typeof t === 'undefined' ? 'undefined' : _typeof(t)):
-        return null === t ? 'null' : t.constructor.name || _class(t);
-    }
-  };
+  //getType :: * -> String
+  // const getType = (t) => {
+  //   switch (true) {
+  //     case ('string' === typeof t):
+  //       return t;
+  //     case ('symbol' === typeof t):
+  //     case ('undefined' === typeof t):
+  //     case ('boolean' === typeof t):
+  //     case ('number' === typeof t):
+  //       return typeof t;
+  //     case ('function' === typeof t):
+  //       return _getFnName(t); //assume constructor
+  //     case ('object' === typeof t):
+  //       return null === t ? 'null' : (t.constructor.name || _class(t));
+  //   }
+  // };
 
   //typeGuard :: [String] -> (a -> *) -> (a -> *)
-  var typeGuard = function (check) {
+  var typeGuard = function (check, getType) {
     return curry(function (ts, fn) {
       var arr = _isArray(ts) && ts.length ? ts : [ts];
       var types = arr.map(function (t) {
@@ -162,8 +162,8 @@
         var test = check(args[0]);
         var passed = types.some(test);
         if (!passed) {
-          var type = _getType(args[0]),
-              expected = types.map(_getType).join(',');
+          var type = getType(args[0]),
+              expected = types.map(getType).join(',');
           throw new TypeError('In fn ' + _getFnName(fn) + ' expected one of ' + expected + ', got ' + type + '.');
         }
         return fn.apply(this, args);
@@ -185,7 +185,21 @@
         break;
     }
     return passed;
-  }));
+  }), function (t) {
+    switch (true) {
+      case 'string' === typeof t:
+        return t;
+      case 'symbol' === (typeof t === 'undefined' ? 'undefined' : _typeof(t)):
+      case 'undefined' === typeof t:
+      case 'boolean' === typeof t:
+      case 'number' === typeof t:
+        return typeof t === 'undefined' ? 'undefined' : _typeof(t);
+      case 'function' === typeof t:
+        return _getFnName(t); //assume constructor
+      case 'object' === (typeof t === 'undefined' ? 'undefined' : _typeof(t)):
+        return null === t ? 'null' : t.constructor.name || _class(t);
+    }
+  });
 
   //_fnFirst :: (* -> *) -> (* -> *)
   var _fnFirst = typeGuard('function');
@@ -315,23 +329,59 @@
   //meant to decorate an event handler with adding the current value (or whatever desired property)
   //of the event target to local storage. The check on the return value of the function allows the
   //decorated function to supply alternative values for setting to localStorage.
-  var setLocalStorage = _fnFirst(function (fn) {
-    var prop = arguments.length <= 1 || arguments[1] === undefined ? 'label' : arguments[1];
-    var val = arguments.length <= 2 || arguments[2] === undefined ? 'value' : arguments[2];
+  // const setLocalStorage = _fnFirst((fn, prop = 'label', val = 'value') => {
+  //   return curry(1, function(e) {
+  //     let result = fn.call(this, e), el = e.currentTarget;
+  //
+  //     //second half is for labels
+  //     let key = el[prop] || el.parentNode.textContent.trim();
+  //     let value = _trim(el[val]);
+  //     if (key != null && value != null) {
+  //       localStorage.setItem(key, value);
+  //     }
+  //     return e;
+  //   });
+  // });
 
-    return curry(1, function (e) {
-      var result = fn.call(this, e),
-          el = e.currentTarget;
+  var setLocalStorage = function setLocalStorage() {
+    for (var _len11 = arguments.length, args = Array(_len11), _key11 = 0; _key11 < _len11; _key11++) {
+      args[_key11] = arguments[_key11];
+    }
 
-      //second half is for labels
-      var key = el[prop] || el.parentNode.textContent.trim();
-      var value = _trim(el[val]);
-      if (key != null && value != null) {
-        localStorage.setItem(key, value);
-      }
-      return e;
-    });
-  });
+    var f = curry(typeGuard(['function', 'string'], function (prop, v, func) {
+      return curry(1, function (e) {
+        var arity2 = 'function' === typeof v;
+        var val = arity2 ? 'value' : v;
+        var fn = arity2 ? v : func;
+        var result = fn.call(null, e),
+            el = e.currentTarget || this; //google maps
+
+        //second half is for labels
+        var key = el[prop] || el.parentNode.textContent.trim();
+        var value = val === null ? result : _trim(el[val]);
+        if (key != null && value != null) {
+          localStorage.setItem(key, value);
+        }
+        return e;
+      });
+    }));
+
+    switch (false) {
+      case !(args.length === 1):
+        if ('function' === typeof args[0]) {
+          return f('label', 'value', args[0]);
+        } else {
+          return f(args[0]);
+        }
+      case !(args.length === 2 && 'function' === typeof args[1]):
+        var value = args[0];
+        var fn = args[1];
+
+        return f('label', value, fn);
+      default:
+        return f.apply(undefined, args);
+    }
+  };
 
   //denodeify :: (* -> *) -> (* -> Promise *)
   //Turns a callback-accepting function into one that returns a Promise.
@@ -340,14 +390,14 @@
     return curry(length, function () {
       var _this3 = this;
 
-      for (var _len11 = arguments.length, args = Array(_len11), _key11 = 0; _key11 < _len11; _key11++) {
-        args[_key11] = arguments[_key11];
+      for (var _len12 = arguments.length, args = Array(_len12), _key12 = 0; _key12 < _len12; _key12++) {
+        args[_key12] = arguments[_key12];
       }
 
       return new Promise(function (resolve, reject) {
         fn.apply(_this3, [].concat(args, [function (err) {
-          for (var _len12 = arguments.length, rest = Array(_len12 > 1 ? _len12 - 1 : 0), _key12 = 1; _key12 < _len12; _key12++) {
-            rest[_key12 - 1] = arguments[_key12];
+          for (var _len13 = arguments.length, rest = Array(_len13 > 1 ? _len13 - 1 : 0), _key13 = 1; _key13 < _len13; _key13++) {
+            rest[_key13 - 1] = arguments[_key13];
           }
 
           if (err) {
@@ -390,8 +440,8 @@
           break;
       }
       return curry(length, function () {
-        for (var _len13 = arguments.length, args = Array(_len13), _key13 = 0; _key13 < _len13; _key13++) {
-          args[_key13] = arguments[_key13];
+        for (var _len14 = arguments.length, args = Array(_len14), _key14 = 0; _key14 < _len14; _key14++) {
+          args[_key14] = arguments[_key14];
         }
 
         return construct.apply(undefined, [ctor].concat(args));
@@ -399,8 +449,8 @@
     };
     return fn;
   }(function () {
-    for (var _len14 = arguments.length, args = Array(_len14), _key14 = 0; _key14 < _len14; _key14++) {
-      args[_key14] = arguments[_key14];
+    for (var _len15 = arguments.length, args = Array(_len15), _key15 = 0; _key15 < _len15; _key15++) {
+      args[_key15] = arguments[_key15];
     }
 
     var ctor = args[0];
@@ -415,8 +465,8 @@
     return curry(f.length, function () {
       console.time(name);
 
-      for (var _len15 = arguments.length, args = Array(_len15), _key15 = 0; _key15 < _len15; _key15++) {
-        args[_key15] = arguments[_key15];
+      for (var _len16 = arguments.length, args = Array(_len16), _key16 = 0; _key16 < _len16; _key16++) {
+        args[_key16] = arguments[_key16];
       }
 
       var result = fn.apply(this, args);
@@ -428,8 +478,8 @@
   //trampoline :: (* -> *) -> (* -> *)
   var trampoline = _fnFirst(function (fn) {
     return curry(fn.length, function () {
-      for (var _len16 = arguments.length, args = Array(_len16), _key16 = 0; _key16 < _len16; _key16++) {
-        args[_key16] = arguments[_key16];
+      for (var _len17 = arguments.length, args = Array(_len17), _key17 = 0; _key17 < _len17; _key17++) {
+        args[_key17] = arguments[_key17];
       }
 
       var result = fn.apply(this, args);
@@ -447,8 +497,8 @@
   //requiring `new` should be wrapped in unNew.
   var lift = curry(function (constructor, fn) {
     return curry(fn.length, function () {
-      for (var _len17 = arguments.length, args = Array(_len17), _key17 = 0; _key17 < _len17; _key17++) {
-        args[_key17] = arguments[_key17];
+      for (var _len18 = arguments.length, args = Array(_len18), _key18 = 0; _key18 < _len18; _key18++) {
+        args[_key18] = arguments[_key18];
       }
 
       var result = fn.apply(this, args);
@@ -466,8 +516,8 @@
   //liftP :: (* -> *) -> (* -> Promise *)
   //I do this often enough for Promises that I baked it in.
   var liftP = lift(function () {
-    for (var _len18 = arguments.length, args = Array(_len18), _key18 = 0; _key18 < _len18; _key18++) {
-      args[_key18] = arguments[_key18];
+    for (var _len19 = arguments.length, args = Array(_len19), _key19 = 0; _key19 < _len19; _key19++) {
+      args[_key19] = arguments[_key19];
     }
 
     return Promise.resolve(args.length > 1 ? args : args[0]);
@@ -476,8 +526,8 @@
   //liftA :: (* -> *) -> (* -> [*])
   //ditto arrays
   var liftA = lift(unGather(function () {
-    for (var _len19 = arguments.length, args = Array(_len19), _key19 = 0; _key19 < _len19; _key19++) {
-      args[_key19] = arguments[_key19];
+    for (var _len20 = arguments.length, args = Array(_len20), _key20 = 0; _key20 < _len20; _key20++) {
+      args[_key20] = arguments[_key20];
     }
 
     return args;
@@ -500,8 +550,8 @@
   //that when called breaks the loop and returns a Promise of last value.
   var loopP = function (err) {
     return _fnFirst(function (fn) {
-      for (var _len20 = arguments.length, args = Array(_len20 > 1 ? _len20 - 1 : 0), _key20 = 1; _key20 < _len20; _key20++) {
-        args[_key20 - 1] = arguments[_key20];
+      for (var _len21 = arguments.length, args = Array(_len21 > 1 ? _len21 - 1 : 0), _key21 = 1; _key21 < _len21; _key21++) {
+        args[_key21 - 1] = arguments[_key21];
       }
 
       var done = false,
@@ -538,8 +588,8 @@
   //Timeout in milliseconds.
   var timeoutP = typeGuard('number', curry(2, function (timeout, fn) {
     return curry(fn.length, function () {
-      for (var _len21 = arguments.length, args = Array(_len21), _key21 = 0; _key21 < _len21; _key21++) {
-        args[_key21] = arguments[_key21];
+      for (var _len22 = arguments.length, args = Array(_len22), _key22 = 0; _key22 < _len22; _key22++) {
+        args[_key22] = arguments[_key22];
       }
 
       var promise = fn.apply(this, args);

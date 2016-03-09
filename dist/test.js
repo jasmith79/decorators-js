@@ -100,6 +100,10 @@
     }
   }
 
+  //Some tests require a browser, so....
+  var WORKER = 'function' === typeof Worker;
+  var LOCAL_STORE = 'undefined' !== typeof localStorage;
+
   //needed for multiple tests
   var sum = function sum(a, b, c) {
     return a + b + c;
@@ -652,4 +656,49 @@
       });
     });
   });
+
+  if (LOCAL_STORE) {
+    describe('setLocalStorage', function () {
+      it('should store the currentTargets info in localStorage for handlers', function () {
+        var el = document.createElement('input');
+        el.label = 'foo';
+        el.value = 'bar';
+        el.addEventListener('click', d.setLocalStorage(function (e) {}));
+        el.dispatchEvent(new Event('click'));
+        expect(localStorage.getItem('foo')).toBe('bar');
+      });
+
+      it('should work with custom keys/values', function () {
+        var el = document.createElement('div');
+        el.baz = 'baz';
+        el.qux = 'qux';
+        el.addEventListener('change', d.setLocalStorage('baz', 'qux', function (e) {}));
+        el.dispatchEvent(new Event('change'));
+        expect(localStorage.getItem('baz')).toBe('qux');
+      });
+
+      it('should work for any of the following type signatures', function () {
+        //setLocalStorage :: String -> String -> (Event -> *) -> (Event -> Event), covered above
+        //setLocalStorage :: String -> (Event -> *) -> (Event -> Event)
+        //setLocalStorage :: (Event -> *) -> (Event -> Event), covered above
+        var el = document.createElement('div');
+        el.val = 'imaval';
+        el.label = 'imakey';
+        el.addEventListener('keydown', d.setLocalStorage('val', function (e) {}));
+        el.dispatchEvent(new Event('keydown'));
+        expect(localStorage.getItem('imakey')).toBe('imaval');
+      });
+
+      it('should use the result of the event handler if val is null', function () {
+        var el = document.createElement('div');
+        el.label = 'yo';
+        el.value = 'mamasofat';
+        el.addEventListener('click', d.setLocalStorage(null, function (e) {
+          return 12;
+        }));
+        el.dispatchEvent(new Event('click'));
+        expect(localStorage.getItem('yo')).toBe('12');
+      });
+    });
+  }
 });
