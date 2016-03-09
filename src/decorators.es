@@ -421,6 +421,36 @@ const timeoutP = typeGuard('number', curry(2, function(timeout, fn) {
   });
 }));
 
+const parallelize = ((template) => {
+  return typeGuard(['function', 'string', 'Blob', Array], (arg) => {
+    let blob = (function() {
+      switch (false) {
+        case(!(arg instanceof Blob)): return arg;
+        case(!(_isArray(arg))): return new Blob(arg);
+        case(!('function' === typeof arg)):
+        case(!('string') === typeof arg):
+          return new Blob([template(arg)]);
+      }
+    })();
+    let url = URL.createObjectURL(blob);
+    let worker = new Worker(url);
+    //URL.revokeObjectURL(url);
+    worker.addEventListener('error', function(e) {
+      throw e;
+    });
+    return unGather((...args) => {
+      return new Promise((resolve, reject) => {
+        let listener = (e) => {
+          //worker.removeEventListener('message', listener);
+          resolve(e.data);
+        };
+        worker.addEventListener('message', listener);
+        worker.postMessage(args.length > 1 ? args : args[0]);
+      });
+    });
+  });
+})((str) => `onmessage = function(e) { postMessage((${str})(e.data)) }`);
+
 export {
   curry,
   typeGuard,
@@ -440,4 +470,5 @@ export {
   bindP,
   loopP,
   timeoutP,
+  parallelize,
 };

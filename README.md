@@ -86,7 +86,9 @@ both of these commands require being in the root project directory to properly r
   error: when called with one argument that is an array it will automatically spread it for you.
 
 ###setLocalStorage
-  `setLocalStorage :: (Event -> [String]), String, String -> (Event -> Event)`
+  `setLocalStorage :: String -> String -> (Event -> *) -> (Event -> Event)`
+  `setLocalStorage :: String -> (Event -> *) -> (Event -> Event)`
+  `setLocalStorage :: (Event -> *) -> (Event -> Event)`
 
   Decorates event handlers so that the change in value is automatically logged to `localStorage`.
   Note that this function is **not** `debounced`/`throttled` by default, you will need to do so
@@ -155,3 +157,11 @@ both of these commands require being in the root project directory to properly r
 
   Rejects if the promise returned from the function takes longer than the given delay to resolve.
   Timeout in milliseconds.
+
+###parallelize
+  `parallelize :: (* -> *) -> (* -> *)`
+
+  Runs the passed-in function in a [Web worker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API). Note that Workers take
+  basically one argument in a message, so if you wish to your function to handle multiple arguments,
+  it needs to expect an array/object. Note also that the function is string-serialized, meaning no
+  `liftA` unfortunately.

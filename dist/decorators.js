@@ -609,6 +609,44 @@
     });
   }));
 
+  var parallelize = function (template) {
+    return typeGuard(['function', 'string', 'Blob', Array], function (arg) {
+      var blob = function () {
+        switch (false) {
+          case !(arg instanceof Blob):
+            return arg;
+          case !_isArray(arg):
+            return new Blob(arg);
+          case !('function' === typeof arg):
+          case !'string' === (typeof arg === 'undefined' ? 'undefined' : _typeof(arg)):
+            return new Blob([template(arg)]);
+        }
+      }();
+      var url = URL.createObjectURL(blob);
+      var worker = new Worker(url);
+      //URL.revokeObjectURL(url);
+      worker.addEventListener('error', function (e) {
+        throw e;
+      });
+      return unGather(function () {
+        for (var _len23 = arguments.length, args = Array(_len23), _key23 = 0; _key23 < _len23; _key23++) {
+          args[_key23] = arguments[_key23];
+        }
+
+        return new Promise(function (resolve, reject) {
+          var listener = function listener(e) {
+            //worker.removeEventListener('message', listener);
+            resolve(e.data);
+          };
+          worker.addEventListener('message', listener);
+          worker.postMessage(args.length > 1 ? args : args[0]);
+        });
+      });
+    });
+  }(function (str) {
+    return 'onmessage = function(e) { postMessage((' + str + ')(e.data)) }';
+  });
+
   exports.curry = curry;
   exports.typeGuard = typeGuard;
   exports.maybe = maybe;
@@ -627,4 +665,5 @@
   exports.bindP = bindP;
   exports.loopP = loopP;
   exports.timeoutP = timeoutP;
+  exports.parallelize = parallelize;
 });

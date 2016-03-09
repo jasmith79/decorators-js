@@ -10,7 +10,7 @@
 import * as d from './decorators.js';
 
 //Some tests require a browser, so....
-const WORKER = 'function' === typeof Worker;
+const WORKER = 'function' === typeof Worker && 'undefined' !== typeof URL;
 const LOCAL_STORE = 'undefined' !== typeof localStorage;
 
 //needed for multiple tests
@@ -92,7 +92,7 @@ describe('typeGuard', function() {
     //instanceof
     let fnArray   = d.typeGuard(Array,    identity);
     let fnRegExp  = d.typeGuard(RegExp,   identity);
-    let fnDate    = d.typeGuard(Date,     identity);
+    let fnDate    = d.typeGuard('Date',   identity); //strings too
     let foo       = new Foo();
     let isFoo     = d.typeGuard(Foo, identity);
     let reg       = /arstast/gmi;
@@ -440,6 +440,8 @@ describe('timeoutP', function() {
   });
 });
 
+/*   Browser-specific tests   */
+
 if (LOCAL_STORE) {
   describe('setLocalStorage', function() {
     it('should store the currentTargets info in localStorage for handlers', function() {
@@ -479,6 +481,25 @@ if (LOCAL_STORE) {
       el.addEventListener('click', d.setLocalStorage(null, (e) => { return 12; }));
       el.dispatchEvent(new Event('click'));
       expect(localStorage.getItem('yo')).toBe('12');
+    });
+  });
+}
+
+if (WORKER) {
+  describe('parallelize', function() {
+    it('should run a function in a separate thread', function(done) {
+      let errHandle = (e) => {
+        expect('I failed').toBe(true);
+        done();
+      };
+      let parSum = d.timeoutP(500, d.parallelize(function(arg) {
+        return arg.reduce((a, b) => a + b, 0);
+      }));
+      let result = parSum(1, 2, 3);
+      result.then((v) => {
+        expect(v).toBe(6);
+        done();
+      }).catch(errHandle);
     });
   });
 }
