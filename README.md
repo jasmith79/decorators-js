@@ -27,6 +27,7 @@ Whichever way you choose, any skipped tests should be logged to the console.
 
 ###maybe
   `maybe :: (* -> a) -> (* -> a)`
+
   `maybe :: (* -> a) -> (Null -> Null)`
 
   Returns `null` if any of its arguments are `null` or `undefined`, otherwise returns the result
@@ -94,7 +95,9 @@ Whichever way you choose, any skipped tests should be logged to the console.
 
 ###setLocalStorage
   `setLocalStorage :: String -> String -> (Event -> *) -> (Event -> Event)`
+
   `setLocalStorage :: String -> (Event -> *) -> (Event -> Event)`
+
   `setLocalStorage :: (Event -> *) -> (Event -> Event)`
 
   Decorates event handlers so that the change in value is automatically logged to `localStorage`.
@@ -112,6 +115,7 @@ Whichever way you choose, any skipped tests should be logged to the console.
 
 ###curry
   `curry ([*] -> *) -> ([*] -> *)`
+
   `curry Number -> ([*] -> *) -> ([*] -> *)`
 
   Implemented it because I needed it internally and I've exposed it purely for convenience: I
@@ -131,6 +135,7 @@ Whichever way you choose, any skipped tests should be logged to the console.
 
 ###lift
   `lift :: (* -> a) -> (* -> *) -> (* -> a)`
+
   Generic lift function. Takes a type constructor for type a and wraps the return value of the
   passed-in function in type a. Type constructors should be guarded, for an example see liftP and
   liftA below. Note that if the function returns an *array* then array will be applied to the
@@ -176,7 +181,9 @@ Whichever way you choose, any skipped tests should be logged to the console.
 
 ###padInt
   `padInt :: (* -> Number) -> (* -> String)`
+
   `padInt :: Number -> (* -> Number) -> (* -> String)`
+  
   `padInt :: Number -> Number -> String`
 
   Pads the numeric results of the passed-in function with the specified number of leading
