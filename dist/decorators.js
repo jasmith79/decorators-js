@@ -586,14 +586,32 @@
     });
   });
 
+  //bindA :: (* -> [*]) -> ([*] -> [*])
+  //Note about context, if you pass initial arguments besides the function to be decorated the
+  //context will be bound at that time.
+  var bindA = curry(1, _fnFirst(function () {
+    for (var _len23 = arguments.length, args = Array(_len23), _key23 = 0; _key23 < _len23; _key23++) {
+      args[_key23] = arguments[_key23];
+    }
+
+    var fn = args[0];
+    var initArgs = args.slice(1);
+
+    var f = function f(fnArgs) {
+      var result = fn.apply(this, fnArgs);
+      return _isArray(result) ? result : [result];
+    };
+    return initArgs.length ? f.apply(this, initArgs) : f;
+  }));
+
   //loopP :: (* -> *) -> (Null -> Promise *)
   //Starts a loop that continually calls the promise-returning function each time the previous
   //iteration resolves with the value of that resolution. Useful for long-polling. Returns a function
   //that when called breaks the loop and returns a Promise of last value.
   var loopP = function (err) {
     return _fnFirst(function (fn) {
-      for (var _len23 = arguments.length, args = Array(_len23 > 1 ? _len23 - 1 : 0), _key23 = 1; _key23 < _len23; _key23++) {
-        args[_key23 - 1] = arguments[_key23];
+      for (var _len24 = arguments.length, args = Array(_len24 > 1 ? _len24 - 1 : 0), _key24 = 1; _key24 < _len24; _key24++) {
+        args[_key24 - 1] = arguments[_key24];
       }
 
       var done = false,
@@ -630,8 +648,8 @@
   //Timeout in milliseconds.
   var timeoutP = typeGuard('number', curry(2, function (timeout, fn) {
     return curry(fn.length, function () {
-      for (var _len24 = arguments.length, args = Array(_len24), _key24 = 0; _key24 < _len24; _key24++) {
-        args[_key24] = arguments[_key24];
+      for (var _len25 = arguments.length, args = Array(_len25), _key25 = 0; _key25 < _len25; _key25++) {
+        args[_key25] = arguments[_key25];
       }
 
       var promise = fn.apply(this, args);
@@ -671,8 +689,8 @@
         throw e;
       });
       return unGather(function () {
-        for (var _len25 = arguments.length, args = Array(_len25), _key25 = 0; _key25 < _len25; _key25++) {
-          args[_key25] = arguments[_key25];
+        for (var _len26 = arguments.length, args = Array(_len26), _key26 = 0; _key26 < _len26; _key26++) {
+          args[_key26] = arguments[_key26];
         }
 
         return new Promise(function (resolve, reject) {
@@ -705,6 +723,7 @@
   exports.liftP = liftP;
   exports.liftA = liftA;
   exports.bindP = bindP;
+  exports.bindA = bindA;
   exports.loopP = loopP;
   exports.timeoutP = timeoutP;
   exports.parallelize = parallelize;

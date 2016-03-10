@@ -493,7 +493,26 @@ describe('padInt', function() {
   });
 });
 
-/*   Browser-specific tests   */
+describe('bindA', function() {
+  it('should take a function of n arguments and return a function that takes an array of length n',
+    function() {
+      let arred = d.bindA(sum);
+      expect(arred([1,2,3])[0]).toBe(6);
+    }
+  );
+
+  it('should preserve ctx', function() {
+    let o = {
+      a: 3,
+      fn: d.bindA(function(b, c) {
+        return this.a + b + c;
+      })
+    };
+    expect(o.fn([1,2])[0]).toBe(6);
+  });
+});
+
+/*   Platform-specific tests   */
 
 if (LOCAL_STORE) {
   describe('setLocalStorage', function() {

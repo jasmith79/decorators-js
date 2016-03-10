@@ -152,6 +152,12 @@ Whichever way you choose, any skipped tests should be logged to the console.
 
   Bind for the Promise (a.k.a Continuation) Monad.
 
+###bindA
+`bindA :: (* -> [*]) -> ([*] -> [*])`
+
+  Bind function for arrays. Note about context, if you pass initial arguments besides the function
+  to be decorated the context will be bound at that time.
+
 ###loopP
   `loopP :: (* -> *) -> (Null -> Promise *)`
 

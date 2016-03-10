@@ -1,6 +1,6 @@
 {
   "name": "decorators-js",
-  "version": "2.3.4",
+  "version": "2.3.5",
   "description": "Common javascript decorators",
   "main": "dist/decorators.js",
   "scripts": {

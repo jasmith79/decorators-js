@@ -398,6 +398,18 @@ const bindP = _fnFirst((fn) => {
   });
 });
 
+//bindA :: (* -> [*]) -> ([*] -> [*])
+//Note about context, if you pass initial arguments besides the function to be decorated the
+//context will be bound at that time.
+const bindA = curry(1, _fnFirst(function(...args) {
+  let [fn, ...initArgs] = args;
+  let f = function(fnArgs) {
+    let result = fn.apply(this, fnArgs);
+    return _isArray(result) ? result : [result];
+  };
+  return initArgs.length ? f.apply(this, initArgs) : f;
+}));
+
 //loopP :: (* -> *) -> (Null -> Promise *)
 //Starts a loop that continually calls the promise-returning function each time the previous
 //iteration resolves with the value of that resolution. Useful for long-polling. Returns a function
@@ -496,6 +508,7 @@ export {
   liftP,
   liftA,
   bindP,
+  bindA,
   loopP,
   timeoutP,
   parallelize,
