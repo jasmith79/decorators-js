@@ -26,9 +26,8 @@ Whichever way you choose, any skipped tests should be logged to the console.
 ##API
 
 ###maybe
-  `maybe :: (* -> a) -> (* -> a)`
-
-  `maybe :: (* -> a) -> (Null -> Null)`
+  * `maybe :: (* -> a) -> (* -> a)`
+  * `maybe :: (* -> a) -> (Null -> Null)`
 
   Returns `null` if any of its arguments are `null` or `undefined`, otherwise returns the result
   of applying the passed-in function to the arguments. If the passed-in function has an arity of
@@ -94,11 +93,9 @@ Whichever way you choose, any skipped tests should be logged to the console.
   error: when called with one argument that is an array it will automatically spread it for you.
 
 ###setLocalStorage
-  `setLocalStorage :: String -> String -> (Event -> *) -> (Event -> Event)`
-
-  `setLocalStorage :: String -> (Event -> *) -> (Event -> Event)`
-
-  `setLocalStorage :: (Event -> *) -> (Event -> Event)`
+  * `setLocalStorage :: String -> String -> (Event -> *) -> (Event -> Event)`
+  * `setLocalStorage :: String -> (Event -> *) -> (Event -> Event)`
+  * `setLocalStorage :: (Event -> *) -> (Event -> Event)`
 
   Decorates event handlers so that the change in value is automatically logged to `localStorage`.
   Note that this function is **not** `debounced`/`throttled` by default, you will need to do so
@@ -114,9 +111,8 @@ Whichever way you choose, any skipped tests should be logged to the console.
   code.
 
 ###curry
-  `curry ([*] -> *) -> ([*] -> *)`
-
-  `curry Number -> ([*] -> *) -> ([*] -> *)`
+  * `curry ([*] -> *) -> ([*] -> *)`
+  * `curry Number -> ([*] -> *) -> ([*] -> *)`
 
   Implemented it because I needed it internally and I've exposed it purely for convenience: I
   recommend using [Ramda's](http://ramdajs.com/0.19.0/index.html) or at least
@@ -180,11 +176,9 @@ Whichever way you choose, any skipped tests should be logged to the console.
   unfortunately.
 
 ###padInt
-  `padInt :: (* -> Number) -> (* -> String)`
-
-  `padInt :: Number -> (* -> Number) -> (* -> String)`
-  
-  `padInt :: Number -> Number -> String`
+  * `padInt :: (* -> Number) -> (* -> String)`
+  * `padInt :: Number -> (* -> Number) -> (* -> String)`
+  * `padInt :: Number -> Number -> String`
 
   Pads the numeric results of the passed-in function with the specified number of leading
   zeros (defaults to 1). Can also work as a standalone function if passed two numbers.
