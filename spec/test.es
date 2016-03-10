@@ -469,17 +469,19 @@ describe('padInt', function() {
   it('should pad the result of the passed in function with zeros', function() {
     let gd = jan1.getDate.bind(jan1);
     let oh_one = d.padInt(gd)();
-    let ooh_one = d.padInt(2, gd)();
+    let ooh_one = d.padInt(3, gd)();
     expect(oh_one).toBe('01');
     expect(ooh_one).toBe('001');
   });
 
   it('can be used as a standalone function', function() {
     let date = jan1.getDate();
-    let oh_one = d.padInt(1, date);
-    let ooh_one = d.padInt(2, date);
+    let oh_one = d.padInt(2, date);
+    let ooh_one = d.padInt(3, date);
+    let ten = d.padInt(() => 10)();
     expect(oh_one).toBe('01');
     expect(ooh_one).toBe('001');
+    expect(ten).toBe('10')
   });
 
   it('should preserve ctx', function() {
@@ -487,7 +489,7 @@ describe('padInt', function() {
     obj.getNum = d.padInt(3, function() {
       return 2;
     });
-    expect(obj.getNum()).toBe('0002');
+    expect(obj.getNum()).toBe('002');
   });
 });
 

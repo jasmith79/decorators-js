@@ -180,5 +180,5 @@ Whichever way you choose, any skipped tests should be logged to the console.
   * `padInt :: Number -> (* -> Number) -> (* -> String)`
   * `padInt :: Number -> Number -> String`
 
-  Pads the numeric results of the passed-in function with the specified number of leading
-  zeros (defaults to 1). Can also work as a standalone function if passed two numbers.
+  Pads the numeric results of the passed-in function with leading zeros up to the given length
+  (defaults to 2). Can also work as a standalone function if passed two numbers.

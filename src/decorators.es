@@ -218,14 +218,14 @@ const log = _fnFirst((fn) => {
 //padInt :: (* -> Number) -> (* -> String)
 //padInt :: Number -> (* -> Number) -> (* -> String)
 //padInt :: Number -> Number -> String
-//Pads the numeric results of the passed-in function with the specified number of leading
-//zeros (defaults to 1). Can also work as a standalone function if passed two numbers.
+//Pads the numeric results of the passed-in function with leading zeros up to the given length
+//(defaults to 2). Can also work as a standalone function if passed two numbers.
 const padInt = (f => {
   return typeGuard(['function', 'number'], (...args) => {
     let [a, b] = args;
     let x, y;
     if ('function' === typeof a) {
-      x = 1, y = a;
+      x = 2, y = a;
     } else {
       x = a;
       if ('undefined' !== typeof b) {
@@ -241,15 +241,14 @@ const padInt = (f => {
     });
   });
 })(typeGuard('number', (z, num) => {
-  let str = '', i = z, n = +num;
-  if (_isNaN(n)) {
+  let str = '' + num, i = z;
+  if (_isNaN(+str)) {
     throw new TypeError('Can only pad a number or numeric string');
   }
-  while (i) {
-    str += '0';
-    --i;
+  while (str.length < z) {
+    str = '0' + str;
   }
-  return str + n;
+  return str;
 })));
 
 //setLocalStorage :: String -> String -> (Event -> *) -> (Event -> Event)
