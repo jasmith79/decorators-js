@@ -66,6 +66,9 @@ const _class = ((r) => a => Object.prototype.toString.call(a).match(r)[1])(/\s([
 //IE workaround for lack of Array.isArray
 const _isArray = a => _class(a) === 'Array' || (a instanceof Array);
 
+//_isNan :: has IE workaround for lack of Number.isNaN
+const _isNaN = (n) => n !== n;
+
 //getType :: * -> String
 // const getType = (t) => {
 //   switch (true) {
@@ -212,24 +215,49 @@ const log = _fnFirst((fn) => {
   });
 });
 
-//setLocalStorage :: (Event -> [String]), String, String -> (Event -> Event)
-//meant to decorate an event handler with adding the current value (or whatever desired property)
-//of the event target to local storage. The check on the return value of the function allows the
-//decorated function to supply alternative values for setting to localStorage.
-// const setLocalStorage = _fnFirst((fn, prop = 'label', val = 'value') => {
-//   return curry(1, function(e) {
-//     let result = fn.call(this, e), el = e.currentTarget;
-//
-//     //second half is for labels
-//     let key = el[prop] || el.parentNode.textContent.trim();
-//     let value = _trim(el[val]);
-//     if (key != null && value != null) {
-//       localStorage.setItem(key, value);
-//     }
-//     return e;
-//   });
-// });
+//padInt :: (* -> Number) -> (* -> String)
+//padInt :: Number -> (* -> Number) -> (* -> String)
+//padInt :: Number -> Number -> String
+//Pads the numeric results of the passed-in function with the specified number of leading
+//zeros (defaults to 1). Can also work as a standalone function if passed two numbers.
+const padInt = (f => {
+  return typeGuard(['function', 'number'], (...args) => {
+    let [a, b] = args;
+    let x, y;
+    if ('function' === typeof a) {
+      x = 1, y = a;
+    } else {
+      x = a;
+      if ('undefined' !== typeof b) {
+        y = b;
+      }
+    }
+    return y ? f(x, y) : f(x);
+  });
+})((fn => {
+  return curry((z, c) => {
+    return 'function' !== typeof c ? fn(z, c) : curry(c.length, function(...args) {
+      return fn(z, c.apply(this, args));
+    });
+  });
+})(typeGuard('number', (z, num) => {
+  let str = '', i = z, n = +num;
+  if (_isNaN(n)) {
+    throw new TypeError('Can only pad a number or numeric string');
+  }
+  while (i) {
+    str += '0';
+    --i;
+  }
+  return str + n;
+})));
 
+//setLocalStorage :: String -> String -> (Event -> *) -> (Event -> Event)
+//setLocalStorage :: String -> (Event -> *) -> (Event -> Event)
+//setLocalStorage :: (Event -> *) -> (Event -> Event)
+//meant to decorate an event handler with adding the current value (or whatever desired property)
+//of the event target to local storage. Passing in null for the second param allows the
+//decorated function to supply alternative values for setting to localStorage.
 const setLocalStorage = (...args) => {
   let f = curry(typeGuard(['function', 'string'], (prop, v, func) => {
     return curry(1, function(e) {
@@ -472,4 +500,5 @@ export {
   loopP,
   timeoutP,
   parallelize,
+  padInt,
 };

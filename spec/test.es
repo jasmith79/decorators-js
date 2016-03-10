@@ -25,6 +25,8 @@ let sum      = function(a,b,c) { return a + b + c; };
 let noop     = function(){};
 let identity = x => x;
 let makeDate = d.unNew(0, Date);
+let dateArray = [2015, 0, 1, 12, 0, 0, 0];
+let jan1 = makeDate(...dateArray);
 let fortytwo = () => 42;
 class Foo {};
 class Bar extends Foo {};
@@ -326,8 +328,6 @@ describe('trampoline', function() {
 });
 
 describe('unNew', function() {
-  let args = [2015, 0, 1, 12, 0, 0, 0];
-  let jan1 = makeDate(...args);
   let now  = makeDate();
   let also = new Date();
 
@@ -462,6 +462,32 @@ describe('timeoutP', function() {
     tre.then((v) => expect(v).toBe(3));
     uhoh.catch((e) => expect(e instanceof Error).toBe(true));
     Promise.all([tre, uhoh]).then(() => done()).catch(() => done());
+  });
+});
+
+describe('padInt', function() {
+  it('should pad the result of the passed in function with zeros', function() {
+    let gd = jan1.getDate.bind(jan1);
+    let oh_one = d.padInt(gd)();
+    let ooh_one = d.padInt(2, gd)();
+    expect(oh_one).toBe('01');
+    expect(ooh_one).toBe('001');
+  });
+
+  it('can be used as a standalone function', function() {
+    let date = jan1.getDate();
+    let oh_one = d.padInt(1, date);
+    let ooh_one = d.padInt(2, date);
+    expect(oh_one).toBe('01');
+    expect(ooh_one).toBe('001');
+  });
+
+  it('should preserve ctx', function() {
+    let obj = new Foo();
+    obj.getNum = d.padInt(3, function() {
+      return 2;
+    });
+    expect(obj.getNum()).toBe('0002');
   });
 });
 
