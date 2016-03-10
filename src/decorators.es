@@ -248,7 +248,7 @@ const padInt = (f => {
 //of the event target to local storage. Passing in null for the second param allows the
 //decorated function to supply alternative values for setting to localStorage.
 const setLocalStorage = (...args) => {
-  let f = curry(typeGuard(['function', 'string'], (prop, v, func) => {
+  let f = typeGuard(['function', 'string'], (prop, v, func) => {
     return curry(1, function(e) {
       let arity2 = 'function' === typeof v;
       let val    = arity2 ? 'value' : v;
@@ -263,7 +263,7 @@ const setLocalStorage = (...args) => {
       }
       return e;
     });
-  }));
+  });
 
   switch (false) {
     case (!(args.length === 1)):
@@ -390,14 +390,14 @@ const bindP = _fnFirst((fn) => {
 //bindA :: (* -> [*]) -> ([*] -> [*])
 //Note about context, if you pass initial arguments besides the function to be decorated the
 //context will be bound at that time.
-const bindA = curry(1, _fnFirst(function(...args) {
+const bindA = _fnFirst(function(...args) {
   let [fn, ...initArgs] = args;
   let f = function(fnArgs) {
     let result = fn.apply(this, fnArgs);
     return _isArray(result) ? result : [result];
   };
   return initArgs.length ? f.apply(this, initArgs) : f;
-}));
+});
 
 //loopP :: (* -> *) -> (Null -> Promise *)
 //Starts a loop that continually calls the promise-returning function each time the previous
@@ -432,7 +432,7 @@ const loopP = ((err) => {
 //timeoutP :: Number -> (* -> Promise *) -> (* -> Promise *)
 //Rejects if the promise takes longer than the given delay to resolve.
 //Timeout in milliseconds.
-const timeoutP = typeGuard('number', curry(2, function(timeout, fn) {
+const timeoutP = typeGuard('number', function(timeout, fn) {
   return curry(fn.length, function(...args) {
     let promise = fn.apply(this, args);
     let resolved = false;
@@ -448,7 +448,7 @@ const timeoutP = typeGuard('number', curry(2, function(timeout, fn) {
       }, timeout);
     });
   });
-}));
+});
 
 const parallelize = ((template) => {
   return typeGuard(['function', 'string', 'Blob', Array], (arg) => {

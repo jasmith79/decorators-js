@@ -382,7 +382,7 @@
       args[_key14] = arguments[_key14];
     }
 
-    var f = curry(typeGuard(['function', 'string'], function (prop, v, func) {
+    var f = typeGuard(['function', 'string'], function (prop, v, func) {
       return curry(1, function (e) {
         var arity2 = 'function' === typeof v;
         var val = arity2 ? 'value' : v;
@@ -398,7 +398,7 @@
         }
         return e;
       });
-    }));
+    });
 
     switch (false) {
       case !(args.length === 1):
@@ -580,7 +580,7 @@
   //bindA :: (* -> [*]) -> ([*] -> [*])
   //Note about context, if you pass initial arguments besides the function to be decorated the
   //context will be bound at that time.
-  var bindA = curry(1, _fnFirst(function () {
+  var bindA = _fnFirst(function () {
     for (var _len24 = arguments.length, args = Array(_len24), _key24 = 0; _key24 < _len24; _key24++) {
       args[_key24] = arguments[_key24];
     }
@@ -593,7 +593,7 @@
       return _isArray(result) ? result : [result];
     };
     return initArgs.length ? f.apply(this, initArgs) : f;
-  }));
+  });
 
   //loopP :: (* -> *) -> (Null -> Promise *)
   //Starts a loop that continually calls the promise-returning function each time the previous
@@ -637,7 +637,7 @@
   //timeoutP :: Number -> (* -> Promise *) -> (* -> Promise *)
   //Rejects if the promise takes longer than the given delay to resolve.
   //Timeout in milliseconds.
-  var timeoutP = typeGuard('number', curry(2, function (timeout, fn) {
+  var timeoutP = typeGuard('number', function (timeout, fn) {
     return curry(fn.length, function () {
       for (var _len26 = arguments.length, args = Array(_len26), _key26 = 0; _key26 < _len26; _key26++) {
         args[_key26] = arguments[_key26];
@@ -658,7 +658,7 @@
         }, timeout);
       });
     });
-  }));
+  });
 
   var parallelize = function (template) {
     return typeGuard(['function', 'string', 'Blob', Array], function (arg) {
