@@ -34,11 +34,11 @@ Whichever way you choose, any skipped tests should be logged to the console.
   0 it may be successfully called with no arguments.
 
 ###debounce
-  `debounce :: Number -> (a -> Null) -> Number`
+  * `debounce :: Number -> (* -> Null) -> Number`
+  * `debounce :: Number -> Boolean -> (* -> Null) -> Number`
 
-  Debounces passed in function. Returns the `setTimeout` handle so caller can cancel. NOTE: the
-  debounced function is what underscore calls leading-edge, if there's no pending timeout the
-  function is executed immediately.
+  Delay in milliseconds. Returns the timer ID so caller can cancel. The optional boolean parameter
+  is whether the function fires on the leading edge or trailing edge (defaults to false).
 
 ###throttle
   `throttle :: Number -> (a -> Null) -> Number`

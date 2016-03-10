@@ -235,29 +235,40 @@
   }));
 
   //debounce :: Number -> (* -> Null) -> Number
-  //Delay in milliseconds. Returns the timer ID so caller can cancel
-  var debounce = curry(function (delay, fn) {
-    if ('function' !== typeof fn) {
-      throw new TypeError("Cannot debounce a non-function");
-    }
-    var timer = null;
-    return curry(fn.length, function () {
-      var _this = this;
-
+  //debounce :: Number -> Boolean -> (* -> Null) -> Number
+  //Delay in milliseconds. Returns the timer ID so caller can cancel. The optional boolean parameter
+  //is whether the function fires on the leading edge or trailing edge (defaults to false).
+  var debounce = function (f) {
+    return curry(2, typeGuard('number', function () {
       for (var _len8 = arguments.length, args = Array(_len8), _key8 = 0; _key8 < _len8; _key8++) {
         args[_key8] = arguments[_key8];
       }
 
-      if (timer == null) {
+      var delay = args[0];
+      var a = args[1];
+      var b = args[2];
+
+      return 'function' === typeof a ? f(delay, false, a) : 'undefined' === typeof b ? typeGuard('function', f(delay, a)) : typeGuard('function', f(delay, a))(b);
+    }));
+  }(curry(function (n, now, fn) {
+    var timer = null;
+    return curry(fn.length, function () {
+      var _this = this;
+
+      for (var _len9 = arguments.length, args = Array(_len9), _key9 = 0; _key9 < _len9; _key9++) {
+        args[_key9] = arguments[_key9];
+      }
+
+      if (timer === null && now) {
         fn.apply(this, args);
       }
       clearTimeout(timer);
       timer = setTimeout(function () {
         return fn.apply(_this, args);
-      }, delay);
+      }, n);
       return timer;
     });
-  });
+  }));
 
   //throttle :: Number -> (* -> Null) -> Number
   //Delay in milliseconds. Returns the timer ID so caller can cancel
@@ -270,8 +281,8 @@
     return curry(fn.length, function () {
       var _this2 = this;
 
-      for (var _len9 = arguments.length, args = Array(_len9), _key9 = 0; _key9 < _len9; _key9++) {
-        args[_key9] = arguments[_key9];
+      for (var _len10 = arguments.length, args = Array(_len10), _key10 = 0; _key10 < _len10; _key10++) {
+        args[_key10] = arguments[_key10];
       }
 
       var now = Date.now();
@@ -291,8 +302,8 @@
   //log :: (* -> *) -> [*] -> *
   var log = _fnFirst(function (fn) {
     return curry(fn.length, function () {
-      for (var _len10 = arguments.length, args = Array(_len10), _key10 = 0; _key10 < _len10; _key10++) {
-        args[_key10] = arguments[_key10];
+      for (var _len11 = arguments.length, args = Array(_len11), _key11 = 0; _key11 < _len11; _key11++) {
+        args[_key11] = arguments[_key11];
       }
 
       var res = fn.apply(this, args);
@@ -320,8 +331,8 @@
   //(defaults to 2). Can also work as a standalone function if passed two numbers.
   var padInt = function (f) {
     return typeGuard(['function', 'number'], function () {
-      for (var _len11 = arguments.length, args = Array(_len11), _key11 = 0; _key11 < _len11; _key11++) {
-        args[_key11] = arguments[_key11];
+      for (var _len12 = arguments.length, args = Array(_len12), _key12 = 0; _key12 < _len12; _key12++) {
+        args[_key12] = arguments[_key12];
       }
 
       var a = args[0];
@@ -342,8 +353,8 @@
   }(function (fn) {
     return curry(function (z, c) {
       return 'function' !== typeof c ? fn(z, c) : curry(c.length, function () {
-        for (var _len12 = arguments.length, args = Array(_len12), _key12 = 0; _key12 < _len12; _key12++) {
-          args[_key12] = arguments[_key12];
+        for (var _len13 = arguments.length, args = Array(_len13), _key13 = 0; _key13 < _len13; _key13++) {
+          args[_key13] = arguments[_key13];
         }
 
         return fn(z, c.apply(this, args));
@@ -367,8 +378,8 @@
   //of the event target to local storage. Passing in null for the second param allows the
   //decorated function to supply alternative values for setting to localStorage.
   var setLocalStorage = function setLocalStorage() {
-    for (var _len13 = arguments.length, args = Array(_len13), _key13 = 0; _key13 < _len13; _key13++) {
-      args[_key13] = arguments[_key13];
+    for (var _len14 = arguments.length, args = Array(_len14), _key14 = 0; _key14 < _len14; _key14++) {
+      args[_key14] = arguments[_key14];
     }
 
     var f = curry(typeGuard(['function', 'string'], function (prop, v, func) {
@@ -413,14 +424,14 @@
     return curry(length, function () {
       var _this3 = this;
 
-      for (var _len14 = arguments.length, args = Array(_len14), _key14 = 0; _key14 < _len14; _key14++) {
-        args[_key14] = arguments[_key14];
+      for (var _len15 = arguments.length, args = Array(_len15), _key15 = 0; _key15 < _len15; _key15++) {
+        args[_key15] = arguments[_key15];
       }
 
       return new Promise(function (resolve, reject) {
         fn.apply(_this3, [].concat(args, [function (err) {
-          for (var _len15 = arguments.length, rest = Array(_len15 > 1 ? _len15 - 1 : 0), _key15 = 1; _key15 < _len15; _key15++) {
-            rest[_key15 - 1] = arguments[_key15];
+          for (var _len16 = arguments.length, rest = Array(_len16 > 1 ? _len16 - 1 : 0), _key16 = 1; _key16 < _len16; _key16++) {
+            rest[_key16 - 1] = arguments[_key16];
           }
 
           if (err) {
@@ -462,8 +473,8 @@
           throw new Error('Type ' + (typeof n === 'undefined' ? 'undefined' : _typeof(n)) + ' unable to be called as a constructor.');
       }
       return curry(length, function () {
-        for (var _len16 = arguments.length, args = Array(_len16), _key16 = 0; _key16 < _len16; _key16++) {
-          args[_key16] = arguments[_key16];
+        for (var _len17 = arguments.length, args = Array(_len17), _key17 = 0; _key17 < _len17; _key17++) {
+          args[_key17] = arguments[_key17];
         }
 
         return construct.apply(undefined, [ctor].concat(args));
@@ -471,8 +482,8 @@
     };
     return fn;
   }(function () {
-    for (var _len17 = arguments.length, args = Array(_len17), _key17 = 0; _key17 < _len17; _key17++) {
-      args[_key17] = arguments[_key17];
+    for (var _len18 = arguments.length, args = Array(_len18), _key18 = 0; _key18 < _len18; _key18++) {
+      args[_key18] = arguments[_key18];
     }
 
     var ctor = args[0];
@@ -487,8 +498,8 @@
     return curry(f.length, function () {
       console.time(name);
 
-      for (var _len18 = arguments.length, args = Array(_len18), _key18 = 0; _key18 < _len18; _key18++) {
-        args[_key18] = arguments[_key18];
+      for (var _len19 = arguments.length, args = Array(_len19), _key19 = 0; _key19 < _len19; _key19++) {
+        args[_key19] = arguments[_key19];
       }
 
       var result = fn.apply(this, args);
@@ -500,8 +511,8 @@
   //trampoline :: (* -> *) -> (* -> *)
   var trampoline = _fnFirst(function (fn) {
     return curry(fn.length, function () {
-      for (var _len19 = arguments.length, args = Array(_len19), _key19 = 0; _key19 < _len19; _key19++) {
-        args[_key19] = arguments[_key19];
+      for (var _len20 = arguments.length, args = Array(_len20), _key20 = 0; _key20 < _len20; _key20++) {
+        args[_key20] = arguments[_key20];
       }
 
       var result = fn.apply(this, args);
@@ -519,8 +530,8 @@
   //requiring `new` should be wrapped in unNew.
   var lift = curry(function (constructor, fn) {
     return curry(fn.length, function () {
-      for (var _len20 = arguments.length, args = Array(_len20), _key20 = 0; _key20 < _len20; _key20++) {
-        args[_key20] = arguments[_key20];
+      for (var _len21 = arguments.length, args = Array(_len21), _key21 = 0; _key21 < _len21; _key21++) {
+        args[_key21] = arguments[_key21];
       }
 
       var result = fn.apply(this, args);
@@ -538,8 +549,8 @@
   //liftP :: (* -> *) -> (* -> Promise *)
   //I do this often enough for Promises that I baked it in.
   var liftP = lift(function () {
-    for (var _len21 = arguments.length, args = Array(_len21), _key21 = 0; _key21 < _len21; _key21++) {
-      args[_key21] = arguments[_key21];
+    for (var _len22 = arguments.length, args = Array(_len22), _key22 = 0; _key22 < _len22; _key22++) {
+      args[_key22] = arguments[_key22];
     }
 
     return Promise.resolve(args.length > 1 ? args : args[0]);
@@ -548,8 +559,8 @@
   //liftA :: (* -> *) -> (* -> [*])
   //ditto arrays
   var liftA = lift(unGather(function () {
-    for (var _len22 = arguments.length, args = Array(_len22), _key22 = 0; _key22 < _len22; _key22++) {
-      args[_key22] = arguments[_key22];
+    for (var _len23 = arguments.length, args = Array(_len23), _key23 = 0; _key23 < _len23; _key23++) {
+      args[_key23] = arguments[_key23];
     }
 
     return args;
@@ -570,8 +581,8 @@
   //Note about context, if you pass initial arguments besides the function to be decorated the
   //context will be bound at that time.
   var bindA = curry(1, _fnFirst(function () {
-    for (var _len23 = arguments.length, args = Array(_len23), _key23 = 0; _key23 < _len23; _key23++) {
-      args[_key23] = arguments[_key23];
+    for (var _len24 = arguments.length, args = Array(_len24), _key24 = 0; _key24 < _len24; _key24++) {
+      args[_key24] = arguments[_key24];
     }
 
     var fn = args[0];
@@ -590,8 +601,8 @@
   //that when called breaks the loop and returns a Promise of last value.
   var loopP = function (err) {
     return _fnFirst(function (fn) {
-      for (var _len24 = arguments.length, args = Array(_len24 > 1 ? _len24 - 1 : 0), _key24 = 1; _key24 < _len24; _key24++) {
-        args[_key24 - 1] = arguments[_key24];
+      for (var _len25 = arguments.length, args = Array(_len25 > 1 ? _len25 - 1 : 0), _key25 = 1; _key25 < _len25; _key25++) {
+        args[_key25 - 1] = arguments[_key25];
       }
 
       var done = false,
@@ -628,8 +639,8 @@
   //Timeout in milliseconds.
   var timeoutP = typeGuard('number', curry(2, function (timeout, fn) {
     return curry(fn.length, function () {
-      for (var _len25 = arguments.length, args = Array(_len25), _key25 = 0; _key25 < _len25; _key25++) {
-        args[_key25] = arguments[_key25];
+      for (var _len26 = arguments.length, args = Array(_len26), _key26 = 0; _key26 < _len26; _key26++) {
+        args[_key26] = arguments[_key26];
       }
 
       var promise = fn.apply(this, args);
@@ -666,8 +677,8 @@
       var worker = new Worker(url);
       URL.revokeObjectURL(url);
       return unGather(function () {
-        for (var _len26 = arguments.length, args = Array(_len26), _key26 = 0; _key26 < _len26; _key26++) {
-          args[_key26] = arguments[_key26];
+        for (var _len27 = arguments.length, args = Array(_len27), _key27 = 0; _key27 < _len27; _key27++) {
+          args[_key27] = arguments[_key27];
         }
 
         return new Promise(function (resolve, reject) {

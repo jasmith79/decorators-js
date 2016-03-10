@@ -238,33 +238,52 @@ describe('maybe', function() {
 
 describe('throttle', function() {
   it('should not fire again until after the waiting period', function(done) {
-    let halfsec = d.throttle(500), counter = 0, f = halfsec(() => counter += 1);
+    let wait = d.throttle(10), counter = 0, f = wait(() => counter += 1);
     let o = {
       num: 0,
-      fn: d.throttle(500, function(){ this.num += 1; })
+      fn: d.throttle(10, function(){ this.num += 1; })
     };
     f();
     o.fn();
-    setTimeout(f, 100);            //should be delayed
-    setTimeout(() => o.fn(), 100); //should be delayed
+    setTimeout(f, 5);            //should be delayed
+    setTimeout(() => o.fn(), 5); //should be delayed
     setTimeout(() => {
        expect(counter).toBe(1);
        expect(o.num).toBe(1);
-    }, 200);
+    }, 8);
     setTimeout(() => {
       expect(counter).toBe(2);
       expect(o.num).toBe(2);
       done();
-    }, 700);
+    }, 20);
   });
 });
 
 describe('debounce', function() {
   it('should drop calls repeated in the waiting period', function(done) {
-    let halfsec = d.debounce(500), counter = 0, f = halfsec(() => counter += 1);
+    let wait = d.debounce(10), counter = 0, f = wait(() => counter += 1);
     let o = {
       num: 0,
-      fn: d.debounce(500, function(){ this.num += 1; })
+      fn: d.debounce(10, function(){ this.num += 1; })
+    };
+    f();
+    f();
+    f();
+    o.fn();
+    o.fn();
+    o.fn();
+    setTimeout(() => {
+      expect(counter).toBe(1);
+      expect(o.num).toBe(1);
+      done();
+    }, 12);
+  });
+
+  it('should have a leading-edge version', function(done) {
+    let wait = d.debounce(10, true), counter = 0, f = wait(() => counter += 1);
+    let o = {
+      num: 0,
+      fn: d.debounce(10, true, function(){ this.num += 1; })
     };
     f();
     f();
@@ -281,8 +300,8 @@ describe('debounce', function() {
         expect(counter).toBe(2);
         expect(o.num).toBe(2);
         done();
-      }, 200)
-    }, 400);
+      }, 4);
+    }, 8);
   });
 });
 

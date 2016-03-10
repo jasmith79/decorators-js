@@ -140,21 +140,29 @@ const maybe = _fnFirst((fn) => {
 const _trim = maybe(typeGuard('string', (str) => str.trim()));
 
 //debounce :: Number -> (* -> Null) -> Number
-//Delay in milliseconds. Returns the timer ID so caller can cancel
-const debounce = curry((delay, fn) => {
-  if ('function' !== typeof fn) {
-    throw new TypeError("Cannot debounce a non-function");
-  }
+//debounce :: Number -> Boolean -> (* -> Null) -> Number
+//Delay in milliseconds. Returns the timer ID so caller can cancel. The optional boolean parameter
+//is whether the function fires on the leading edge or trailing edge (defaults to false).
+const debounce = ((f) => {
+  return curry(2, typeGuard('number', (...args) => {
+    let [delay, a, b] = args;
+    return 'function' === typeof a ?
+      f(delay, false, a) :
+      'undefined' === typeof b ?
+        typeGuard('function', f(delay, a)) :
+        typeGuard('function', f(delay, a))(b);
+  }))
+})(curry((n, now, fn) => {
   let timer = null;
   return curry(fn.length, function(...args) {
-    if (timer == null) {
+    if (timer === null && now) {
       fn.apply(this, args);
     }
     clearTimeout(timer);
-    timer = setTimeout(() => fn.apply(this, args), delay);
+    timer = setTimeout(() => fn.apply(this, args), n);
     return timer;
   });
-});
+}));
 
 //throttle :: Number -> (* -> Null) -> Number
 //Delay in milliseconds. Returns the timer ID so caller can cancel
