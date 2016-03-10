@@ -800,6 +800,19 @@
           done();
         }).catch(errHandle);
       });
+
+      it('should reject appropriately on error', function (done) {
+        var throws = d.parallelize(function (arg) {
+          return arg[0].foo();
+        });
+        var error = throws(6);
+        error.then(function () {
+          throw new Error('shouldnt see this');
+        }).catch(function (e) {
+          expect(e instanceof Error).toBe(true); //unnecessary really
+          done();
+        });
+      });
     });
   } else {
     console.log('skipping Worker test');

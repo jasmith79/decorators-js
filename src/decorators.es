@@ -30,10 +30,9 @@ const curry = ((c) => {
         fn = n, length = n.length;
         break;
       case ('number' === typeof n):
-        return function(func) { return _curry.call(null, n, func); };
+        return function(func) { return _curry.call(ctx, n, func); };
       default:
         throw new Error(`Type ${typeof n} unable to be curried.`);
-        break;
     }
     return function(...fnArgs) {
       let ctx = this === _global ? null : this;
@@ -68,23 +67,6 @@ const _isArray = a => _class(a) === 'Array' || (a instanceof Array);
 
 //_isNan :: has IE workaround for lack of Number.isNaN
 const _isNaN = (n) => n !== n;
-
-//getType :: * -> String
-// const getType = (t) => {
-//   switch (true) {
-//     case ('string' === typeof t):
-//       return t;
-//     case ('symbol' === typeof t):
-//     case ('undefined' === typeof t):
-//     case ('boolean' === typeof t):
-//     case ('number' === typeof t):
-//       return typeof t;
-//     case ('function' === typeof t):
-//       return _getFnName(t); //assume constructor
-//     case ('object' === typeof t):
-//       return null === t ? 'null' : (t.constructor.name || _class(t));
-//   }
-// };
 
 //typeGuard :: [String] -> (a -> *) -> (a -> *)
 const typeGuard = ((check, getType) => {
@@ -241,7 +223,7 @@ const padInt = (f => {
     });
   });
 })(typeGuard('number', (z, num) => {
-  let str = '' + num, i = z;
+  let str = '' + num;
   if (_isNaN(+str)) {
     throw new TypeError('Can only pad a number or numeric string');
   }
@@ -333,7 +315,6 @@ const unNew = ((construct) => {
         break;
       default:
         throw new Error(`Type ${typeof n} unable to be called as a constructor.`);
-        break;
     }
     return curry(length, (...args) => {
       return construct(ctor, ...args);
@@ -474,17 +455,19 @@ const parallelize = ((template) => {
     })();
     let url = URL.createObjectURL(blob);
     let worker = new Worker(url);
-    //URL.revokeObjectURL(url);
-    worker.addEventListener('error', function(e) {
-      throw e;
-    });
+    URL.revokeObjectURL(url);
     return unGather((...args) => {
       return new Promise((resolve, reject) => {
+        let errHandle = (e) => {
+          reject(new Error(`${e.message} - ${e.filename}: ${e.lineno}`));
+        }
         let listener = (e) => {
-          //worker.removeEventListener('message', listener);
+          worker.removeEventListener('message', listener);
+          worker.removeEventListener('error', errHandle);
           resolve(e.data);
         };
         worker.addEventListener('message', listener);
+        worker.addEventListener('error', errHandle);
         worker.postMessage(args.length > 1 ? args : args[0]);
       });
     });

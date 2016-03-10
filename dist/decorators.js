@@ -70,11 +70,10 @@
           break;
         case 'number' === typeof n:
           return function (func) {
-            return _curry.call(null, n, func);
+            return _curry.call(ctx, n, func);
           };
         default:
           throw new Error('Type ' + (typeof n === 'undefined' ? 'undefined' : _typeof(n)) + ' unable to be curried.');
-          break;
       }
       return function () {
         var ctx = this === _global ? null : this;
@@ -134,23 +133,6 @@
   var _isNaN = function _isNaN(n) {
     return n !== n;
   };
-
-  //getType :: * -> String
-  // const getType = (t) => {
-  //   switch (true) {
-  //     case ('string' === typeof t):
-  //       return t;
-  //     case ('symbol' === typeof t):
-  //     case ('undefined' === typeof t):
-  //     case ('boolean' === typeof t):
-  //     case ('number' === typeof t):
-  //       return typeof t;
-  //     case ('function' === typeof t):
-  //       return _getFnName(t); //assume constructor
-  //     case ('object' === typeof t):
-  //       return null === t ? 'null' : (t.constructor.name || _class(t));
-  //   }
-  // };
 
   //typeGuard :: [String] -> (a -> *) -> (a -> *)
   var typeGuard = function (check, getType) {
@@ -368,8 +350,7 @@
       });
     });
   }(typeGuard('number', function (z, num) {
-    var str = '' + num,
-        i = z;
+    var str = '' + num;
     if (_isNaN(+str)) {
       throw new TypeError('Can only pad a number or numeric string');
     }
@@ -479,7 +460,6 @@
           break;
         default:
           throw new Error('Type ' + (typeof n === 'undefined' ? 'undefined' : _typeof(n)) + ' unable to be called as a constructor.');
-          break;
       }
       return curry(length, function () {
         for (var _len16 = arguments.length, args = Array(_len16), _key16 = 0; _key16 < _len16; _key16++) {
@@ -684,21 +664,23 @@
       }();
       var url = URL.createObjectURL(blob);
       var worker = new Worker(url);
-      //URL.revokeObjectURL(url);
-      worker.addEventListener('error', function (e) {
-        throw e;
-      });
+      URL.revokeObjectURL(url);
       return unGather(function () {
         for (var _len26 = arguments.length, args = Array(_len26), _key26 = 0; _key26 < _len26; _key26++) {
           args[_key26] = arguments[_key26];
         }
 
         return new Promise(function (resolve, reject) {
+          var errHandle = function errHandle(e) {
+            reject(new Error(e.message + ' - ' + e.filename + ': ' + e.lineno));
+          };
           var listener = function listener(e) {
-            //worker.removeEventListener('message', listener);
+            worker.removeEventListener('message', listener);
+            worker.removeEventListener('error', errHandle);
             resolve(e.data);
           };
           worker.addEventListener('message', listener);
+          worker.addEventListener('error', errHandle);
           worker.postMessage(args.length > 1 ? args : args[0]);
         });
       });
