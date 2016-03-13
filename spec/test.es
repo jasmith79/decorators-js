@@ -75,6 +75,14 @@ describe('curry', function() {
    expect(o.fn(1,2)).toBe(6);
    expect(o.fn(1)(2)).toBe(6);
  });
+
+ it('should preserve the correct arity', function() {
+   let curr = d.curry(sum);
+   expect(curr.arity()).toBe(3);
+   expect(curr(1).arity()).toBe(2);
+   expect(curr(1, 2).arity()).toBe(1);
+   expect((curr(1)(2)).arity()).toBe(1);
+ })
 });
 
 describe('typeGuard', function() {

@@ -51,12 +51,44 @@
     return window || global || self;
   };
 
+  //this quick and dirty polyfill will leak memory, so be careful...
+  var _arities = 'function' === typeof WeakMap ? new WeakMap() : function (err) {
+    var keys = [];
+    var values = [];
+    var set = function set(k, v) {
+      var type = typeof k === 'undefined' ? 'undefined' : _typeof(k);
+      if ('object' !== type || 'function' !== type) {
+        throw err;
+      }
+      keys.push(k);
+      values.push(v);
+      return _arities;
+    };
+    var get = function get(k) {
+      return k in keys ? values(keys.indexOf(key)) : void 0;
+    };
+    var has = function has(k) {
+      return k in keys;
+    };
+    var clear = function clear() {
+      keys = [];
+      values = [];
+      return _arities;
+    };
+    return {
+      has: has,
+      get: get,
+      set: set,
+      clear: clear
+    };
+  }(new TypeError('Must use objects as keys to WeakMap'));
+
   /*   Functions   */
 
   //curry ([*] -> *) -> ([*] -> *)
   //curry Number -> ([*] -> *) -> ([*] -> *)
   //inspired by Nick Fitzgerald's implementation for wu.js
-  var curry = function (c) {
+  var curry = function (c, arity) {
     var _curry = function _curry(n, f) {
       var length = void 0,
           fn = void 0,
@@ -66,16 +98,19 @@
           fn = f, length = n;
           break;
         case 'function' === typeof n:
-          fn = n, length = n.length;
+          fn = n, length = 'function' === typeof n.arity ? n.arity() : n.length;
           break;
         case 'number' === typeof n:
           return function (func) {
-            return _curry.call(ctx, n, func);
+            var g = _curry.call(ctx, n, func);
+            _arities.set(g, n);
+            g.arity = arity;
+            return g;
           };
         default:
           throw new Error('Type ' + (typeof n === 'undefined' ? 'undefined' : _typeof(n)) + ' unable to be curried.');
       }
-      return function () {
+      var currier = function currier() {
         var ctx = this === _global ? null : this;
 
         for (var _len = arguments.length, fnArgs = Array(_len), _key = 0; _key < _len; _key++) {
@@ -85,11 +120,17 @@
         if (fnArgs.length < length) {
           var currLength = length - fnArgs.length;
           var curried = c.apply(ctx, [fn].concat(fnArgs));
-          return currLength > 0 ? _curry.call(null, currLength, curried) : curried;
+          var func = currLength > 0 ? _curry.call(null, currLength, curried) : curried;
+          _arities.set(func, currLength);
+          func.arity = arity;
+          return func;
         } else {
           return fn.apply(ctx, fnArgs);
         }
       };
+      _arities.set(currier, length);
+      currier.arity = arity;
+      return currier;
     };
     return _curry;
   }(function (fn) {
@@ -105,6 +146,8 @@
 
       return fn.apply(ctx, [].concat(args, fnArgs));
     };
+  }, function () {
+    return _arities.get(this);
   });
 
   //IE workaround for lack of function name property on Functions
