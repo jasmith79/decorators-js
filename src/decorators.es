@@ -235,6 +235,7 @@ const log = _fnFirst((fn) => {
     let result = null, name = _getFnName(fn), fnArgs = args.length ? args : "no arguments";
     switch (typeof res) {
       case 'object':
+      case 'undefined':
       case 'string':
         result = res;
         break;

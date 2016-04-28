@@ -355,6 +355,7 @@
           fnArgs = args.length ? args : "no arguments";
       switch (typeof res === 'undefined' ? 'undefined' : _typeof(res)) {
         case 'object':
+        case 'undefined':
         case 'string':
           result = res;
           break;
