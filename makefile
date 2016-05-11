@@ -26,8 +26,8 @@ $(MIN): $(APP)
 	uglifyjs -cmo $@ $<
 $(APP): $(SRC)
 	@mkdir -p $(@D)
-	babel $< -o $@
+	babel $< --plugins transform-es2015-modules-umd -o $@
 $(TESTS): $(TES)
 	@mkdir -p $(@D)
-	babel $< -o $@
+	babel $< --plugins transform-es2015-modules-umd -o $@
 .PHONY: all clean install build test jasmine serve phantom

@@ -1,14 +1,7 @@
 # decorators-js
 Common javascript decorators I use. You'll note some omissions like `memoize`. I use the
 [Ramda](http://ramdajs.com/0.19.0/index.html) library quite frequently and did not feel the need to
-duplicate their excellent work (although the module does not *depend* on Ramda, I implemented curry
-internally).
-
-Note that while I made the decorators work for methods to the extent that it was possible or
-sensible they *will not* invoke the passed in function with the global object as context. So if
-passed a top-level function in non-strict mode, the context will be `null` rather than `window` or
-`global`. If you wish a function to be evaluated with `this` being the global meta-object you will
-have to explicitly bind the context before handing it to the decorator.
+duplicate their excellent work (although the module does not *depend* on Ramda.
 
 ##Testing
 
@@ -57,20 +50,6 @@ Whichever way you choose, any skipped tests should be logged to the console.
   returns a Promise of the result instead. If the callback receives multiple non-error parameters
   then it will return a Promise of an array of the results.
 
-###unNew
-  `unNew :: (* -> {k:v}) -> (* -> {k:v})`
-
-  Similar to [Ramda's](http://ramdajs.com/0.19.0/index.html) `Construct`, `unNew` takes a
-  Javascript constructor function and wraps it so that it functions properly when called without
-  the `new` operator. Useful for (among other things) mapping a constructor over a list of
-  configuration objects. NOTE: be careful when using with constructors that take optional
-  parameters, especially built-ins. Date for instance has an arity of 7, but can be called with
-  no arguments at all. Because the return function is curried, use in the following fashion:
-
-  `let makeDate = decorators.unNew(0, Date);`
-
-  Unless you want the currying.
-
 ###unGather
   `unGather :: ([*] -> *) -> ([[*]] -> *)`
 
@@ -109,25 +88,6 @@ Whichever way you choose, any skipped tests should be logged to the console.
   there is some extra overhead in the nested function calls. If a great deal of precision in
   measurement is required, you will want to put `console.time`/`console.timeEnd` directly in the
   code.
-
-###curry
-  * `curry ([*] -> *) -> ([*] -> *)`
-  * `curry Number -> ([*] -> *) -> ([*] -> *)`
-
-  Implemented it because I needed it internally and I've exposed it purely for convenience: I
-  recommend using [Ramda's](http://ramdajs.com/0.19.0/index.html) or at least
-  [lodash's](https://lodash.com/) `curry`. Curries the function either to the specified arity
-  or the function's length property.
-
-###typeGuard
-  `typeGuard :: [String] -> (a -> *) -> (a -> *)`
-
-  Takes a list of types to check against the first argument of the decorated function. Can test
-  constructors, primitives, string types (e.g. 'function', 'boolean'), and will duck-type objects
-  based on either their constructors name or their internal class property. Although this will
-  not provide the same benefits as static type-checking, what it *does* do is eliminate the silent
-  fail case: strings and arrays have many of the same methods, the `+` handles strings *and*
-  numbers, `typeof null === 'object'`, etc.
 
 ###lift
   `lift :: (* -> a) -> (* -> *) -> (* -> a)`
@@ -174,6 +134,8 @@ Whichever way you choose, any skipped tests should be logged to the console.
 
 ###parallelize
   `parallelize :: (* -> *) -> (* -> *)`
+
+  \*\* **WARNING: not IE compatible.** I know of no way to do an inline worker in IE.\*\*
 
   Runs the passed-in function in a [Web worker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API). Note that Workers take
   basically one argument in a message, so although `parallelize` will gather the arguments into an

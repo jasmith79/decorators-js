@@ -1,6 +1,6 @@
 {
   "name": "decorators-js",
-  "version": "2.3.10",
+  "version": "3.0.0",
   "description": "Common javascript decorators",
   "main": "dist/decorators.js",
   "scripts": {
@@ -33,9 +33,9 @@
   "babel": {
     "presets": [
       "es2015"
-    ],
-    "plugins": [
-      "transform-es2015-modules-umd"
     ]
+  },
+  "dependencies": {
+    "js-typed": "^0.2.5"
   }
 }

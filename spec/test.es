@@ -8,13 +8,16 @@
  */
 
 import * as d from './decorators.js';
+import * as typed from 'js-typed';
 
 const _global = (() => {
-  let window = window || null;
-  let global = global || null;
-  let self   = self   || null;
-  return window || global || self;
-});
+  switch (true) {
+    case 'undefined' !== typeof window: return window;
+    case 'undefined' !== typeof global: return global;
+    case 'undefined' !== typeof self:   return self;
+    default:                            return (new Function('return this;'))()
+  }
+})();
 
 //Some tests require a browser, so....
 const WORKER = 'function' === typeof Worker && 'undefined' !== typeof URL;
@@ -24,7 +27,7 @@ const LOCAL_STORE = 'undefined' !== typeof localStorage;
 let sum      = function(a,b,c) { return a + b + c; };
 let noop     = function(){};
 let identity = x => x;
-let makeDate = d.unNew(0, Date);
+let makeDate = typed.guardClass(0, Date);
 let dateArray = [2015, 0, 1, 12, 0, 0, 0];
 let jan1 = makeDate(...dateArray);
 let fortytwo = () => 42;
@@ -54,150 +57,150 @@ Number.isNaN = Number.isNaN || function(x) {
   return x !== x;
 }
 
-describe('curry', function() {
- it('should let arguments be passed in multiple calls', function() {
-   let fn = d.curry(sum);
-   expect(fn(1,2,3)).toBe(6);
-   expect(fn(1,2)(3)).toBe(6);
-   expect(fn(1)(2)(3)).toBe(6);
-   expect(fn('a','b','c')).toBe('abc');
-   expect(fn('a','b')('c')).toBe('abc');
-   expect(fn('a')('b')('c')).toBe('abc');
- });
-
- it('should preserve ctx for methods', function() {
-   let o = {
-     a: 3,
-     fn: d.curry(function(b, c) {
-       return this.a + b + c;
-     })
-   };
-   expect(o.fn(1,2)).toBe(6);
-   expect(o.fn(1)(2)).toBe(6);
- });
-
- it('should preserve the correct arity', function() {
-   let curr = d.curry(sum);
-   expect(curr.arity()).toBe(3);
-   expect(curr(1).arity()).toBe(2);
-   expect(curr(1, 2).arity()).toBe(1);
-   expect((curr(1)(2)).arity()).toBe(1);
- })
-});
-
-describe('typeGuard', function() {
-  it('should work for all 7 basic types', function() {
-    let string  = d.typeGuard('string',    identity);
-    let number  = d.typeGuard('number',    identity);
-    let func    = d.typeGuard('function',  identity);
-    let object  = d.typeGuard('object',    identity);
-    let undef   = d.typeGuard('undefined', identity);
-    let boolean = d.typeGuard('boolean',   identity);
-    let o       = {};
-    expect(string('a')).toBe('a');
-    expect((() => string(3))).toThrowError(TypeError);
-    expect(number(3)).toBe(3);
-    expect((() => number('a'))).toThrowError(TypeError);
-    expect(func(identity)).toBe(identity);
-    expect((() => func(3))).toThrowError(TypeError);
-    expect(object(o)).toBe(o);
-    expect((() => object(3))).toThrowError(TypeError);
-    expect(undef(undefined)).toBe(undefined);
-    expect((() => undef(null))).toThrowError(TypeError);
-    expect(boolean(true)).toBe(true);
-    expect((() => boolean(null))).toThrowError(TypeError);
-    if (SYMBOL) {
-      let symbol  = d.typeGuard('symbol',    identity);
-      let sym     = Symbol('sym');
-      expect(symbol(sym)).toBe(sym);
-      expect((() => symbol('sym'))).toThrowError(TypeError);
-    } else {
-      console.log('skipping Symbol tests');
-    }
-  });
-
-  it('should work for instances of constructors custom and builtin ctor/literals', function() {
-
-    //internal class
-    let array     = d.typeGuard('Array',  identity);
-    let regexp    = d.typeGuard('regexp', identity); //testing case-insensitivity
-    let date      = d.typeGuard('Date',   identity);
-    let error     = d.typeGuard('Error',  identity);
-
-    //instanceof
-    let fnArray   = d.typeGuard(Array,    identity);
-    let fnRegExp  = d.typeGuard(RegExp,   identity);
-    let fnDate    = d.typeGuard('Date',   identity); //strings too
-    let foo       = new Foo();
-    let isFoo     = d.typeGuard(Foo, identity);
-    let reg       = /arstast/gmi;
-    let arr       = [];
-    let now       = new Date();
-    let barr      = new Bar();
-
-    //duck-types
-    let otherFoo  = d.typeGuard(new Bar(), identity);
-    let otherArr  = d.typeGuard([], identity);
-
-    expect(array(arr)).toBe(arr);
-    expect((() => array({}))).toThrowError(TypeError);
-    expect(fnArray(arr)).toBe(arr);
-    expect((() => fnArray({}))).toThrowError(TypeError);
-    expect(regexp(reg)).toBe(reg);
-    expect((() => regexp({}))).toThrowError(TypeError);
-    expect(fnRegExp(reg)).toBe(reg);
-    expect((() => fnRegExp({}))).toThrowError(TypeError);
-    expect(date(now)).toBe(now);
-    expect((() => date({}))).toThrowError(TypeError);
-    expect(fnDate(now)).toBe(now);
-    expect((() => fnDate({}))).toThrowError(TypeError);
-    expect(isFoo(foo)).toBe(foo);
-    expect(isFoo(barr)).toBe(barr);
-    expect((() => isFoo({}))).toThrowError(TypeError);
-    expect(otherFoo(barr)).toBe(barr);
-    expect(() => otherFoo({})).toThrowError(TypeError);
-    expect(otherArr(arr)).toBe(arr);
-    expect(() => otherArr({})).toThrowError(TypeError);
-  });
-
-  it('should work for builtin namespace objects like Math', function() {
-    let math = d.typeGuard('Math', identity);
-    expect(math(Math)).toBe(Math);
-    expect((() => math(null))).toThrowError(TypeError);
-  });
-
-  it('should work properly for null, "null", and "Null"', function() {
-    let nulled = d.typeGuard(null, identity);
-    let anull  = d.typeGuard('Null', identity);
-    expect(nulled(null)).toBeNull();
-    expect(anull(null)).toBeNull();
-    expect((() => nulled({}))).toThrowError(TypeError);
-    expect((() => anull({}))).toThrowError(TypeError);
-  });
-
-  it('should preserve ctx for methods', function() {
-    let o = {
-      a: 3,
-      fn: d.typeGuard('number', function(b, c) { return this.a + b + c;})
-    };
-    expect(o.fn(1, 2)).toBe(6);
-    expect(() => o.fn(null, 2)).toThrowError(TypeError);
-  });
-
-  it('should handle polymorphic functions', function() {
-    let poly = d.typeGuard(['string', Date], (a) => {
-      switch (true) {
-        case ('string' === typeof a):
-          return 3;
-        case (a instanceof Date):
-          return 5;
-      }
-    });
-    expect(poly('a')).toBe(3);
-    expect(poly(new Date())).toBe(5);
-    expect(() => poly(42)).toThrowError(TypeError);
-  })
-});
+// describe('curry', function() {
+//  it('should let arguments be passed in multiple calls', function() {
+//    let fn = d.curry(sum);
+//    expect(fn(1,2,3)).toBe(6);
+//    expect(fn(1,2)(3)).toBe(6);
+//    expect(fn(1)(2)(3)).toBe(6);
+//    expect(fn('a','b','c')).toBe('abc');
+//    expect(fn('a','b')('c')).toBe('abc');
+//    expect(fn('a')('b')('c')).toBe('abc');
+//  });
+//
+//  it('should preserve ctx for methods', function() {
+//    let o = {
+//      a: 3,
+//      fn: d.curry(function(b, c) {
+//        return this.a + b + c;
+//      })
+//    };
+//    expect(o.fn(1,2)).toBe(6);
+//    expect(o.fn(1)(2)).toBe(6);
+//  });
+//
+//  it('should preserve the correct arity', function() {
+//    let curr = d.curry(sum);
+//    expect(curr.arity()).toBe(3);
+//    expect(curr(1).arity()).toBe(2);
+//    expect(curr(1, 2).arity()).toBe(1);
+//    expect((curr(1)(2)).arity()).toBe(1);
+//  })
+// });
+//
+// describe('typeGuard', function() {
+//   it('should work for all 7 basic types', function() {
+//     let string  = d.typeGuard('string',    identity);
+//     let number  = d.typeGuard('number',    identity);
+//     let func    = d.typeGuard('function',  identity);
+//     let object  = d.typeGuard('object',    identity);
+//     let undef   = d.typeGuard('undefined', identity);
+//     let boolean = d.typeGuard('boolean',   identity);
+//     let o       = {};
+//     expect(string('a')).toBe('a');
+//     expect((() => string(3))).toThrowError(TypeError);
+//     expect(number(3)).toBe(3);
+//     expect((() => number('a'))).toThrowError(TypeError);
+//     expect(func(identity)).toBe(identity);
+//     expect((() => func(3))).toThrowError(TypeError);
+//     expect(object(o)).toBe(o);
+//     expect((() => object(3))).toThrowError(TypeError);
+//     expect(undef(undefined)).toBe(undefined);
+//     expect((() => undef(null))).toThrowError(TypeError);
+//     expect(boolean(true)).toBe(true);
+//     expect((() => boolean(null))).toThrowError(TypeError);
+//     if (SYMBOL) {
+//       let symbol  = d.typeGuard('symbol',    identity);
+//       let sym     = Symbol('sym');
+//       expect(symbol(sym)).toBe(sym);
+//       expect((() => symbol('sym'))).toThrowError(TypeError);
+//     } else {
+//       console.log('skipping Symbol tests');
+//     }
+//   });
+//
+//   it('should work for instances of constructors custom and builtin ctor/literals', function() {
+//
+//     //internal class
+//     let array     = d.typeGuard('Array',  identity);
+//     let regexp    = d.typeGuard('regexp', identity); //testing case-insensitivity
+//     let date      = d.typeGuard('Date',   identity);
+//     let error     = d.typeGuard('Error',  identity);
+//
+//     //instanceof
+//     let fnArray   = d.typeGuard(Array,    identity);
+//     let fnRegExp  = d.typeGuard(RegExp,   identity);
+//     let fnDate    = d.typeGuard('Date',   identity); //strings too
+//     let foo       = new Foo();
+//     let isFoo     = d.typeGuard(Foo, identity);
+//     let reg       = /arstast/gmi;
+//     let arr       = [];
+//     let now       = new Date();
+//     let barr      = new Bar();
+//
+//     //duck-types
+//     let otherFoo  = d.typeGuard(new Bar(), identity);
+//     let otherArr  = d.typeGuard([], identity);
+//
+//     expect(array(arr)).toBe(arr);
+//     expect((() => array({}))).toThrowError(TypeError);
+//     expect(fnArray(arr)).toBe(arr);
+//     expect((() => fnArray({}))).toThrowError(TypeError);
+//     expect(regexp(reg)).toBe(reg);
+//     expect((() => regexp({}))).toThrowError(TypeError);
+//     expect(fnRegExp(reg)).toBe(reg);
+//     expect((() => fnRegExp({}))).toThrowError(TypeError);
+//     expect(date(now)).toBe(now);
+//     expect((() => date({}))).toThrowError(TypeError);
+//     expect(fnDate(now)).toBe(now);
+//     expect((() => fnDate({}))).toThrowError(TypeError);
+//     expect(isFoo(foo)).toBe(foo);
+//     expect(isFoo(barr)).toBe(barr);
+//     expect((() => isFoo({}))).toThrowError(TypeError);
+//     expect(otherFoo(barr)).toBe(barr);
+//     expect(() => otherFoo({})).toThrowError(TypeError);
+//     expect(otherArr(arr)).toBe(arr);
+//     expect(() => otherArr({})).toThrowError(TypeError);
+//   });
+//
+//   it('should work for builtin namespace objects like Math', function() {
+//     let math = d.typeGuard('Math', identity);
+//     expect(math(Math)).toBe(Math);
+//     expect((() => math(null))).toThrowError(TypeError);
+//   });
+//
+//   it('should work properly for null, "null", and "Null"', function() {
+//     let nulled = d.typeGuard(null, identity);
+//     let anull  = d.typeGuard('Null', identity);
+//     expect(nulled(null)).toBeNull();
+//     expect(anull(null)).toBeNull();
+//     expect((() => nulled({}))).toThrowError(TypeError);
+//     expect((() => anull({}))).toThrowError(TypeError);
+//   });
+//
+//   it('should preserve ctx for methods', function() {
+//     let o = {
+//       a: 3,
+//       fn: d.typeGuard('number', function(b, c) { return this.a + b + c;})
+//     };
+//     expect(o.fn(1, 2)).toBe(6);
+//     expect(() => o.fn(null, 2)).toThrowError(TypeError);
+//   });
+//
+//   it('should handle polymorphic functions', function() {
+//     let poly = d.typeGuard(['string', Date], (a) => {
+//       switch (true) {
+//         case ('string' === typeof a):
+//           return 3;
+//         case (a instanceof Date):
+//           return 5;
+//       }
+//     });
+//     expect(poly('a')).toBe(3);
+//     expect(poly(new Date())).toBe(5);
+//     expect(() => poly(42)).toThrowError(TypeError);
+//   })
+// });
 
 describe('unGather', function() {
   it('should conditionally unnest an array argument', function() {
@@ -354,32 +357,37 @@ describe('trampoline', function() {
   });
 });
 
-describe('unNew', function() {
-  let now  = makeDate();
-  let also = new Date();
-
-  it('should allow a constructor function to be curried/applied/called', function() {
-    expect(jan1.getFullYear()).toBe(2015);
-    expect(jan1.getMonth()).toBe(0);
-    expect(jan1.getDate()).toBe(1);
-    expect(jan1.getHours()).toBe(12);
-    expect(jan1.getMinutes()).toBe(0);
-    expect(jan1.getSeconds()).toBe(0);
-    expect(Math.abs(also.getTime() - now.getTime())).toBeLessThan(500);
-  });
-
-  it('should not break instanceof', function() {
-    let makeBar = d.unNew(Bar);
-    let bar = makeBar();
-    expect(jan1 instanceof Date).toBe(true);
-    expect(bar instanceof Foo).toBe(true);
-  });
-});
+// describe('unNew', function() {
+//   let now  = makeDate();
+//   let also = new Date();
+//
+//   it('should allow a constructor function to be curried/applied/called', function() {
+//     expect(jan1.getFullYear()).toBe(2015);
+//     expect(jan1.getMonth()).toBe(0);
+//     expect(jan1.getDate()).toBe(1);
+//     expect(jan1.getHours()).toBe(12);
+//     expect(jan1.getMinutes()).toBe(0);
+//     expect(jan1.getSeconds()).toBe(0);
+//     expect(Math.abs(also.getTime() - now.getTime())).toBeLessThan(500);
+//   });
+//
+//   it('should not break instanceof', function() {
+//     let makeBar = d.unNew(Bar);
+//     let bar = makeBar();
+//     expect(jan1 instanceof Date).toBe(true);
+//     expect(bar instanceof Foo).toBe(true);
+//   });
+// });
 
 describe('lift', function() {
   it('should wrap the return value in the passed in constructor', function() {
     let liftD = d.lift((...args) => {
-      return makeDate(...args)
+      switch (true) {
+        case !args.length:
+        case args.length === 1 && args[0] == null:
+          return makeDate();
+        default: return makeDate(...args);
+      }
     });
     let now = new Date();
     let later = liftD(() => {})();
@@ -391,15 +399,18 @@ describe('lift', function() {
     expect(later instanceof Date).toBe(true);
     expect(Math.abs(t2 - t1)).toBeLessThan(500);
     let also = liftD(() => {
-      return [
+      let arr = [
         later.getFullYear(),
         later.getMonth(),
         later.getDate(),
         later.getHours(),
         later.getMinutes(),
         later.getSeconds()
-      ]
+      ];
+      console.log(`\nArr: ${arr}\n`);
+      return arr;
     })();
+    console.log(`\n${also.toString()}\n`);
     expect(Math.abs(also.getTime() - later.getTime())).toBeLessThan(1000);
   })
 })
