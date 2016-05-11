@@ -2,7 +2,7 @@ SHELL := /bin/bash
 PATH  := node_modules/.bin:$(PATH)
 APP   := dist/decorators.js
 TESTS := dist/test.js
-SRC   := src/decorators.es
+SRC   := src/decorators-js.es
 TES   := spec/test.es
 MIN   := dist/decorators.min.js
 all: install clean build

@@ -8,7 +8,7 @@
       exports: {}
     };
     factory(mod.exports, global.jsTyped);
-    global.decorators = mod.exports;
+    global.decoratorsJs = mod.exports;
   }
 })(this, function (exports, _jsTyped) {
   'use strict';
