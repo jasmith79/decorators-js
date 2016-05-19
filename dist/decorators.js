@@ -16,7 +16,7 @@
   Object.defineProperty(exports, "__esModule", {
     value: true
   });
-  exports.padInt = exports.parallelize = exports.timeoutP = exports.loopP = exports.bindA = exports.bindP = exports.liftA = exports.liftP = exports.lift = exports.trampoline = exports.runtime = exports.denodeify = exports.setLocalStorage = exports.log = exports.throttle = exports.debounce = exports.unGather = exports.maybe = undefined;
+  exports.padInt = exports.parallelize = exports.timeoutP = exports.loopP = exports.bindA = exports.bindP = exports.trampoline = exports.runtime = exports.denodeify = exports.setLocalStorage = exports.log = exports.throttle = exports.debounce = exports.unGather = exports.maybe = undefined;
 
   var typed = _interopRequireWildcard(_jsTyped);
 
@@ -34,18 +34,6 @@
 
       newObj.default = obj;
       return newObj;
-    }
-  }
-
-  function _toConsumableArray(arr) {
-    if (Array.isArray(arr)) {
-      for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) {
-        arr2[i] = arr[i];
-      }
-
-      return arr2;
-    } else {
-      return Array.from(arr);
     }
   }
 
@@ -372,48 +360,24 @@
     });
   });
 
-  //lift :: (* -> a) -> (* -> *) -> (* -> a)
-  //takes a type constructor for type a and wraps the return value of the passed-in function in type
-  //a. Type constructors should be guarded, for an example see liftP and liftA below. Note that if the
-  //function returns an *array* then array will be applied to the constructor, i.e. constructors
-  //requiring `new` should be wrapped in typed.guardClass.
-  var lift = typed.guard(['function', 'function'], function (constructor, fn) {
-    return typed.curry(fn.length, function () {
-      for (var _len11 = arguments.length, args = Array(_len11), _key11 = 0; _key11 < _len11; _key11++) {
-        args[_key11] = arguments[_key11];
-      }
-
-      var result = fn.apply(this, args);
-      switch (_extractHiddenClass(result)) {
-        case 'array':
-          return constructor.apply(undefined, _toConsumableArray(result));
-        case 'undefined':
-          return constructor();
-        default:
-          return constructor(result);
-      }
-    });
-  });
-
-  //liftP :: (* -> *) -> (* -> Promise *)
-  //I do this often enough for Promises that I baked it in.
-  var liftP = lift(function () {
-    for (var _len12 = arguments.length, args = Array(_len12), _key12 = 0; _key12 < _len12; _key12++) {
-      args[_key12] = arguments[_key12];
-    }
-
-    return Promise.resolve(args.length > 1 ? args : args[0]);
-  });
-
-  //liftA :: (* -> *) -> (* -> [*])
-  //ditto arrays
-  var liftA = lift(unGather(function () {
-    for (var _len13 = arguments.length, args = Array(_len13), _key13 = 0; _key13 < _len13; _key13++) {
-      args[_key13] = arguments[_key13];
-    }
-
-    return args;
-  }));
+  // //lift :: (a -> m a) -> (a -> b) -> (m a -> m b)
+  // //takes a type constructor for type a and wraps the return value of the passed-in function in type
+  // //a. Type constructors should be guarded, for an example see liftP and liftA below. Note that if the
+  // //function returns an *array* then array will be applied to the constructor, i.e. constructors
+  // //requiring `new` should be wrapped in typed.guardClass.
+  // const lift = typed.guard(['function','function'], (constructor, fn) => {
+  //   return typed.curry(fn.length, function(...args) {
+  //     let result = fn.apply(this, args);
+  //     switch(_extractHiddenClass(result)) {
+  //       case 'array': return constructor(...result);
+  //       case 'undefined': return constructor();
+  //       default: return constructor(result);
+  //     }
+  //   });
+  // });
+  //
+  // //liftA :: (* -> *) -> (* -> [*])
+  // const liftA = lift(unGather((...args) => args));
 
   //bindP :: (* -> Promise *) -> (Promise * -> Promise *)
   var bindP = _takesFn(function (fn) {
@@ -443,8 +407,8 @@
   var loopP = function (err) {
     //return _fnFirst(function(fn, ...args) {
     return _takesFn(function (fn) {
-      for (var _len14 = arguments.length, args = Array(_len14 > 1 ? _len14 - 1 : 0), _key14 = 1; _key14 < _len14; _key14++) {
-        args[_key14 - 1] = arguments[_key14];
+      for (var _len11 = arguments.length, args = Array(_len11 > 1 ? _len11 - 1 : 0), _key11 = 1; _key11 < _len11; _key11++) {
+        args[_key11 - 1] = arguments[_key11];
       }
 
       var done = false,
@@ -479,8 +443,8 @@
   //Timeout in milliseconds.
   var timeoutP = typed.guard(['number', 'function'], function (timeout, fn) {
     return typed.curry(fn.length, function () {
-      for (var _len15 = arguments.length, args = Array(_len15), _key15 = 0; _key15 < _len15; _key15++) {
-        args[_key15] = arguments[_key15];
+      for (var _len12 = arguments.length, args = Array(_len12), _key12 = 0; _key12 < _len12; _key12++) {
+        args[_key12] = arguments[_key12];
       }
 
       var promise = Promise.resolve(fn.apply(this, args));
@@ -517,8 +481,8 @@
     var worker = new Worker(url);
     URL.revokeObjectURL(url);
     return unGather(function () {
-      for (var _len16 = arguments.length, args = Array(_len16), _key16 = 0; _key16 < _len16; _key16++) {
-        args[_key16] = arguments[_key16];
+      for (var _len13 = arguments.length, args = Array(_len13), _key13 = 0; _key13 < _len13; _key13++) {
+        args[_key13] = arguments[_key13];
       }
 
       return new Promise(function (resolve, reject) {
@@ -536,37 +500,6 @@
       });
     });
   });
-  // const parallelize = ((template) => {
-  //   return typeGuard(['function', 'string', 'Blob', Array], (arg) => {
-  //     let blob = (function() {
-  //       switch (false) {
-  //         case(!(arg instanceof Blob)): return arg;
-  //         case(!(_isArray(arg))): return new Blob(arg);
-  //         case(!('function' === typeof arg)):
-  //         case(!('string') === typeof arg):
-  //           return new Blob([template(arg)]);
-  //       }
-  //     })();
-  //     let url = URL.createObjectURL(blob);
-  //     let worker = new Worker(url);
-  //     URL.revokeObjectURL(url);
-  //     return unGather((...args) => {
-  //       return new Promise((resolve, reject) => {
-  //         let errHandle = (e) => {
-  //           reject(new Error(`${e.message} - ${e.filename}: ${e.lineno}`));
-  //         }
-  //         let listener = (e) => {
-  //           worker.removeEventListener('message', listener);
-  //           worker.removeEventListener('error', errHandle);
-  //           resolve(e.data);
-  //         };
-  //         worker.addEventListener('message', listener);
-  //         worker.addEventListener('error', errHandle);
-  //         worker.postMessage(args.length > 1 ? args : args[0]);
-  //       });
-  //     });
-  //   });
-  // })((str) => `onmessage = function(e) { postMessage((${str})(e.data)) }`);
 
   exports.maybe = maybe;
   exports.unGather = unGather;
@@ -577,10 +510,11 @@
   exports.denodeify = denodeify;
   exports.runtime = runtime;
   exports.trampoline = trampoline;
-  exports.lift = lift;
-  exports.liftP = liftP;
-  exports.liftA = liftA;
-  exports.bindP = bindP;
+  exports.
+  // lift,
+  // liftP,
+  // liftA,
+  bindP = bindP;
   exports.bindA = bindA;
   exports.loopP = loopP;
   exports.timeoutP = timeoutP;

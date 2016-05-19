@@ -379,69 +379,69 @@ describe('trampoline', function() {
 //   });
 // });
 
-describe('lift', function() {
-  it('should wrap the return value in the passed in constructor', function() {
-    let liftD = d.lift((...args) => {
-      switch (true) {
-        case !args.length:
-        case args.length === 1 && args[0] == null:
-          return makeDate();
-        default: return makeDate(...args);
-      }
-    });
-    let now = new Date();
-    let later = liftD(() => {})();
-    let t1 = now.getTime();
-    let t2 = later.getTime();
-    if (Number.isNaN(t2)) {
-      throw new Error(`${later.toString()} is not a valid date`);
-    }
-    expect(later instanceof Date).toBe(true);
-    expect(Math.abs(t2 - t1)).toBeLessThan(500);
-    let also = liftD(() => {
-      let arr = [
-        later.getFullYear(),
-        later.getMonth(),
-        later.getDate(),
-        later.getHours(),
-        later.getMinutes(),
-        later.getSeconds()
-      ];
-      console.log(`\nArr: ${arr}\n`);
-      return arr;
-    })();
-    console.log(`\n${also.toString()}\n`);
-    expect(Math.abs(also.getTime() - later.getTime())).toBeLessThan(1000);
-  })
-})
-
-describe('liftP', function() {
-  it('should turn a function into a promise-returning fn', function(done) {
-    let p = d.liftP(fortytwo)();
-    p.then((v) => {
-      expect(v).toBe(42);
-      done();
-    });
-  });
-});
-
-describe('liftA', function() {
-  let arr = d.liftA(fortytwo)();
-  it('should turn a function into a array-returning fn', function() {
-    expect(arr.length).toBe(1);
-    expect(arr[0]).toBe(42);
-  });
-
-  it('should auto-flatten', function() {
-    let returnsArray = () => [3];
-    let val = d.liftA(returnsArray)();
-    expect(val[0]).toBe(3);
-  });
-});
+// describe('lift', function() {
+//   it('should wrap the return value in the passed in constructor', function() {
+//     let liftD = d.lift((...args) => {
+//       switch (true) {
+//         case !args.length:
+//         case args.length === 1 && args[0] == null:
+//           return makeDate();
+//         default: return makeDate(...args);
+//       }
+//     });
+//     let now = new Date();
+//     let later = liftD(() => {})();
+//     let t1 = now.getTime();
+//     let t2 = later.getTime();
+//     if (Number.isNaN(t2)) {
+//       throw new Error(`${later.toString()} is not a valid date`);
+//     }
+//     expect(later instanceof Date).toBe(true);
+//     expect(Math.abs(t2 - t1)).toBeLessThan(500);
+//     let also = liftD(() => {
+//       let arr = [
+//         later.getFullYear(),
+//         later.getMonth(),
+//         later.getDate(),
+//         later.getHours(),
+//         later.getMinutes(),
+//         later.getSeconds()
+//       ];
+//       console.log(`\nArr: ${arr}\n`);
+//       return arr;
+//     })();
+//     console.log(`\n${also.toString()}\n`);
+//     expect(Math.abs(also.getTime() - later.getTime())).toBeLessThan(1000);
+//   })
+// })
+//
+// describe('liftP', function() {
+//   it('should turn a function into a promise-returning fn', function(done) {
+//     let p = d.liftP(fortytwo)();
+//     p.then((v) => {
+//       expect(v).toBe(42);
+//       done();
+//     });
+//   });
+// });
+//
+// describe('liftA', function() {
+//   let arr = d.liftA(fortytwo)();
+//   it('should turn a function into a array-returning fn', function() {
+//     expect(arr.length).toBe(1);
+//     expect(arr[0]).toBe(42);
+//   });
+//
+//   it('should auto-flatten', function() {
+//     let returnsArray = () => [3];
+//     let val = d.liftA(returnsArray)();
+//     expect(val[0]).toBe(3);
+//   });
+// });
 
 describe('bindP', function() {
   it('should turn a -> a into Promise a -> Promise a', function(done) {
-    let nine = d.bindP((n) => n * 3)(Promise.resolve(3));
+    let nine = d.bindP(n => n * 3)(Promise.resolve(3));
     nine.then((v) => {
       expect(v).toBe(9);
       done();
@@ -471,10 +471,10 @@ describe('loopP', function() {
 
   it('should be capable of recursion', function(done) {
     let counter = 0
-    let padd = d.liftP((n) => {
+    let padd = n => {
       counter += 1;
-      return n + counter;
-    });
+      return Promise.resolve(n + counter);
+    };
     let fin = d.loopP(padd, 0);
     setTimeout(() => {
       fin().then((v) => {
@@ -491,7 +491,7 @@ describe('loopP', function() {
 
 describe('timeoutP', function() {
   it('should reject a promise that takes too long to resolve', function(done) {
-    let timeout = 100, fn = d.liftP(() => 3);
+    let timeout = 100, fn = () => Promise.resolve(3);
     let fail = () => new Promise((res, rej) => {
       setTimeout(() => res(3), 200);
     });

@@ -240,29 +240,24 @@ const trampoline = _takesFn(fn => {
   });
 });
 
-//lift :: (* -> a) -> (* -> *) -> (* -> a)
-//takes a type constructor for type a and wraps the return value of the passed-in function in type
-//a. Type constructors should be guarded, for an example see liftP and liftA below. Note that if the
-//function returns an *array* then array will be applied to the constructor, i.e. constructors
-//requiring `new` should be wrapped in typed.guardClass.
-const lift = typed.guard(['function','function'], (constructor, fn) => {
-  return typed.curry(fn.length, function(...args) {
-    let result = fn.apply(this, args);
-    switch(_extractHiddenClass(result)) {
-      case 'array': return constructor(...result);
-      case 'undefined': return constructor();
-      default: return constructor(result);
-    }
-  });
-});
-
-//liftP :: (* -> *) -> (* -> Promise *)
-//I do this often enough for Promises that I baked it in.
-const liftP = lift((...args) => Promise.resolve(args.length > 1 ? args : args[0]));
-
-//liftA :: (* -> *) -> (* -> [*])
-//ditto arrays
-const liftA = lift(unGather((...args) => args));
+// //lift :: (a -> m a) -> (a -> b) -> (m a -> m b)
+// //takes a type constructor for type a and wraps the return value of the passed-in function in type
+// //a. Type constructors should be guarded, for an example see liftP and liftA below. Note that if the
+// //function returns an *array* then array will be applied to the constructor, i.e. constructors
+// //requiring `new` should be wrapped in typed.guardClass.
+// const lift = typed.guard(['function','function'], (constructor, fn) => {
+//   return typed.curry(fn.length, function(...args) {
+//     let result = fn.apply(this, args);
+//     switch(_extractHiddenClass(result)) {
+//       case 'array': return constructor(...result);
+//       case 'undefined': return constructor();
+//       default: return constructor(result);
+//     }
+//   });
+// });
+//
+// //liftA :: (* -> *) -> (* -> [*])
+// const liftA = lift(unGather((...args) => args));
 
 //bindP :: (* -> Promise *) -> (Promise * -> Promise *)
 const bindP = _takesFn(fn => {
@@ -360,37 +355,6 @@ const parallelize = ((template, f) => {
     });
   }
 );
-// const parallelize = ((template) => {
-//   return typeGuard(['function', 'string', 'Blob', Array], (arg) => {
-//     let blob = (function() {
-//       switch (false) {
-//         case(!(arg instanceof Blob)): return arg;
-//         case(!(_isArray(arg))): return new Blob(arg);
-//         case(!('function' === typeof arg)):
-//         case(!('string') === typeof arg):
-//           return new Blob([template(arg)]);
-//       }
-//     })();
-//     let url = URL.createObjectURL(blob);
-//     let worker = new Worker(url);
-//     URL.revokeObjectURL(url);
-//     return unGather((...args) => {
-//       return new Promise((resolve, reject) => {
-//         let errHandle = (e) => {
-//           reject(new Error(`${e.message} - ${e.filename}: ${e.lineno}`));
-//         }
-//         let listener = (e) => {
-//           worker.removeEventListener('message', listener);
-//           worker.removeEventListener('error', errHandle);
-//           resolve(e.data);
-//         };
-//         worker.addEventListener('message', listener);
-//         worker.addEventListener('error', errHandle);
-//         worker.postMessage(args.length > 1 ? args : args[0]);
-//       });
-//     });
-//   });
-// })((str) => `onmessage = function(e) { postMessage((${str})(e.data)) }`);
 
 export {
   maybe,
@@ -402,9 +366,9 @@ export {
   denodeify,
   runtime,
   trampoline,
-  lift,
-  liftP,
-  liftA,
+  // lift,
+  // liftP,
+  // liftA,
   bindP,
   bindA,
   loopP,
