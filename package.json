@@ -1,6 +1,6 @@
 {
   "name": "decorators-js",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "description": "Common javascript decorators",
   "main": "dist/decorators.js",
   "scripts": {
@@ -36,6 +36,6 @@
     ]
   },
   "dependencies": {
-    "js-typed": "^0.2.5"
+    "js-typed": "^0.4.0"
   }
 }
