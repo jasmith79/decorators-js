@@ -89,24 +89,6 @@ Whichever way you choose, any skipped tests should be logged to the console.
   measurement is required, you will want to put `console.time`/`console.timeEnd` directly in the
   code.
 
-###lift
-  `lift :: (* -> a) -> (* -> *) -> (* -> a)`
-
-  Generic lift function. Takes a type constructor for type a and wraps the return value of the
-  passed-in function in type a. Type constructors should be guarded, for an example see liftP and
-  liftA below. Note that if the function returns an *array* then array will be applied to the
-  constructor, i.e. constructors requiring `new` should be wrapped in unNew.
-
-###liftA
-  `liftA :: (* -> *) -> (* -> [*])`
-
-  Wraps the return value of the passed-in function in an array.
-
-###liftP
-  `liftP :: (* -> *) -> (* -> Promise *)`
-
-  Wraps the return value of the passed-in function in a Promise.
-
 ###bindP
   `bindP :: (* -> Promise *) -> (Promise * -> Promise *)`
 
