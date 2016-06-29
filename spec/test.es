@@ -550,6 +550,14 @@ describe('bindA', function() {
   });
 });
 
+describe('nary', () => {
+  it('Should return a function that only gets n arguments no matter how many supplied', () => {
+    let test = d.nary(2, (...args) => args.toString());
+    expect(test(2,3)).toBe('2,3');
+    expect(test(2,3,4)).toBe('2,3');
+  });
+});
+
 /*   Platform-specific tests   */
 
 if (LOCAL_STORE) {

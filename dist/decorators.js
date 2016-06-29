@@ -16,7 +16,7 @@
   Object.defineProperty(exports, "__esModule", {
     value: true
   });
-  exports.padInt = exports.parallelize = exports.timeoutP = exports.loopP = exports.bindA = exports.bindP = exports.trampoline = exports.runtime = exports.denodeify = exports.setLocalStorage = exports.log = exports.throttle = exports.debounce = exports.unGather = exports.maybe = undefined;
+  exports.unary = exports.nary = exports.padInt = exports.parallelize = exports.timeoutP = exports.loopP = exports.bindA = exports.bindP = exports.trampoline = exports.runtime = exports.denodeify = exports.setLocalStorage = exports.log = exports.throttle = exports.debounce = exports.unGather = exports.maybe = undefined;
 
   var typed = _interopRequireWildcard(_jsTyped);
 
@@ -34,6 +34,18 @@
 
       newObj.default = obj;
       return newObj;
+    }
+  }
+
+  function _toConsumableArray(arr) {
+    if (Array.isArray(arr)) {
+      for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) {
+        arr2[i] = arr[i];
+      }
+
+      return arr2;
+    } else {
+      return Array.from(arr);
     }
   }
 
@@ -501,6 +513,19 @@
     });
   });
 
+  // nary :: Number -> (a -> b) -> a -> b
+  var nary = typed.guard(['number', 'function'], function (n, f) {
+    return function () {
+      for (var _len14 = arguments.length, args = Array(_len14), _key14 = 0; _key14 < _len14; _key14++) {
+        args[_key14] = arguments[_key14];
+      }
+
+      return f.apply(undefined, _toConsumableArray(args.slice(0, n)));
+    };
+  });
+
+  var unary = nary(1);
+
   exports.maybe = maybe;
   exports.unGather = unGather;
   exports.debounce = debounce;
@@ -510,14 +535,12 @@
   exports.denodeify = denodeify;
   exports.runtime = runtime;
   exports.trampoline = trampoline;
-  exports.
-  // lift,
-  // liftP,
-  // liftA,
-  bindP = bindP;
+  exports.bindP = bindP;
   exports.bindA = bindA;
   exports.loopP = loopP;
   exports.timeoutP = timeoutP;
   exports.parallelize = parallelize;
   exports.padInt = padInt;
+  exports.nary = nary;
+  exports.unary = unary;
 });

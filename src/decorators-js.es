@@ -356,6 +356,11 @@ const parallelize = ((template, f) => {
   }
 );
 
+// nary :: Number -> (a -> b) -> a -> b
+const nary = typed.guard(['number', 'function'], (n, f) => (...args) => f(...args.slice(0, n)));
+
+const unary = nary(1);
+
 export {
   maybe,
   unGather,
@@ -366,13 +371,12 @@ export {
   denodeify,
   runtime,
   trampoline,
-  // lift,
-  // liftP,
-  // liftA,
   bindP,
   bindA,
   loopP,
   timeoutP,
   parallelize,
   padInt,
+  nary,
+  unary,
 };

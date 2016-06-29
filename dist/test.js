@@ -741,6 +741,20 @@
     });
   });
 
+  describe('nary', function () {
+    it('Should return a function that only gets n arguments no matter how many supplied', function () {
+      var test = d.nary(2, function () {
+        for (var _len4 = arguments.length, args = Array(_len4), _key4 = 0; _key4 < _len4; _key4++) {
+          args[_key4] = arguments[_key4];
+        }
+
+        return args.toString();
+      });
+      expect(test(2, 3)).toBe('2,3');
+      expect(test(2, 3, 4)).toBe('2,3');
+    });
+  });
+
   /*   Platform-specific tests   */
 
   if (LOCAL_STORE) {
