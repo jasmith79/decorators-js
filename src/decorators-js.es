@@ -24,6 +24,8 @@ const _global = (() => {
   }
 })();
 
+typed.defType('_promise', p => p && typed.respondsTo('then', p));
+
 const _takesFn = typed.guard(['function']);
 
 // Extracts internal [[class]] property of a javascript value
@@ -261,7 +263,7 @@ const trampoline = _takesFn(fn => {
 
 //bindP :: (* -> Promise *) -> (Promise * -> Promise *)
 const bindP = _takesFn(fn => {
-  return typed.guard('promise', function(p) {
+  return typed.guard('_promise', function(p) {
     return p.then(a => fn.call(this, a));
   });
 });

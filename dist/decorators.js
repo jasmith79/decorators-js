@@ -85,6 +85,10 @@
     }
   }();
 
+  typed.defType('_promise', function (p) {
+    return p && typed.respondsTo('then', p);
+  });
+
   var _takesFn = typed.guard(['function']);
 
   // Extracts internal [[class]] property of a javascript value
@@ -393,7 +397,7 @@
 
   //bindP :: (* -> Promise *) -> (Promise * -> Promise *)
   var bindP = _takesFn(function (fn) {
-    return typed.guard('promise', function (p) {
+    return typed.guard('_promise', function (p) {
       var _this4 = this;
 
       return p.then(function (a) {
