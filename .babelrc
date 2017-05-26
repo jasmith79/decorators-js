@@ -1,0 +1,11 @@
+{
+  "plugins": ["transform-es2015-modules-umd"],
+  "presets": [
+    ["env", {
+      "targets": {
+        "browsers": ["ie >= 11"],
+        "node": "current"
+      }
+    }]
+  ]
+}

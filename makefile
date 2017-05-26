@@ -2,32 +2,32 @@ SHELL := /bin/bash
 PATH  := node_modules/.bin:$(PATH)
 APP   := dist/decorators.js
 TESTS := dist/test.js
-SRC   := src/decorators-js.es
-TES   := spec/test.es
+SRC   := src/decorators-js.js
+TES   := spec/test.js
 MIN   := dist/decorators.min.js
-all: install clean build
-test:
-	make jasmine
-	make phantom
-	make serve
-phantom:
-	phantomjs spec/run-jasmine.js spec/index.html
+all: $(MIN) $(TESTS)
+
 clean:
 	rm -r dist
+
 install:
 	@npm install
-#some tests are node-specific, rather than have to type node_modules/.bin/jasmine
-jasmine:
+
+test:
 	jasmine
+
 serve:
-	node spec/server.js
-build: $(MIN) $(TESTS)
+	python3 -m http.server 8080
+
 $(MIN): $(APP)
 	uglifyjs -cmo $@ $<
+
 $(APP): $(SRC)
 	@mkdir -p $(@D)
-	babel $< --plugins transform-es2015-modules-umd -o $@
+	babel $< -o $@
+
 $(TESTS): $(TES)
 	@mkdir -p $(@D)
-	babel $< --plugins transform-es2015-modules-umd -o $@
-.PHONY: all clean install build test jasmine serve phantom
+	babel $< -o $@
+
+.PHONY: all clean install build serve test

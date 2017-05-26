@@ -1,11 +1,8 @@
 {
   "name": "decorators-js",
-  "version": "3.1.3",
+  "version": "4.0.0",
   "description": "Common javascript decorators",
   "main": "dist/decorators.js",
-  "scripts": {
-    "test": "phantomjs"
-  },
   "repository": {
     "type": "git",
     "url": "https://github.com/jasmith79/decorators-js.git"
@@ -13,7 +10,8 @@
   "keywords": [
     "es2015",
     "es6",
-    "decorators"
+    "decorators",
+    "functional"
   ],
   "author": "jasmith79@gmail.com",
   "license": "MIT",
@@ -22,20 +20,11 @@
   },
   "homepage": "https://github.com/jasmith79/decorators-js",
   "devDependencies": {
-    "babel-cli": "^6.6.4",
-    "babel-plugin-transform-es2015-modules-umd": "^6.6.0",
-    "babel-preset-es2015": "^6.6.0",
-    "es6-promise": "^3.1.2",
-    "jasmine": "^2.4.1",
-    "phantomjs": "^2.1.3",
-    "uglifyjs": "^2.4.10"
-  },
-  "babel": {
-    "presets": [
-      "es2015"
-    ]
-  },
-  "dependencies": {
-    "js-typed": "^1.1.0"
+    "babel-cli": "6.24.1",
+    "babel-plugin-transform-es2015-modules-umd": "6.24.1",
+    "babel-preset-env": "1.5.1",
+    "es6-promise": "4.1.0",
+    "jasmine": "2.6.0",
+    "uglify-js": "3.0.11"
   }
 }
